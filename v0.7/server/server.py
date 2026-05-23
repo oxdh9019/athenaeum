@@ -101,6 +101,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Athenaeum V0.7", lifespan=lifespan)
 
+# 挂载静态资源
+dist_path = current_dir.parent / "client" / "dist"
+if dist_path.exists():
+    app.mount("/assets", StaticFiles(directory=str(dist_path / "assets")), name="assets")
+
 
 class AgentCreateRequest(BaseModel):
     id: str

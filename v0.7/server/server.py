@@ -11,7 +11,8 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, WebSocketDisconnect
-from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 
 current_dir = Path(__file__).parent
@@ -118,6 +119,11 @@ class WorldCreateRequest(BaseModel):
 
 @ app.get("/")
 async def root():
+    # dist 在 v0.7/client/dist, server 在 v0.7/server
+    dist_path = current_dir.parent / "client" / "dist"
+    index_path = dist_path / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
     return {"message": "Athenaeum V0.7 灵魂增强版", "status": "running"}
 
 
@@ -222,6 +228,38 @@ async def _run_world_tick():
             break
         except Exception as e:
             logger.error(f"Tick 执行错误: {e}")
+
+
+@ app.get("/world/state")
+async def get_world_state():
+    """获取世界状态"""
+    global _world, _dialogue_mgr
+
+    if not _world:
+        return {"tick_id": 0, "time_of_day": "unknown", "weather": "unknown", "agents": [], "locations": [], "dialogues": []}
+
+    agents_data = []
+    if hasattr(_world, '_agents'):
+        for agent_id, agent_data in _world._agents.items():
+            agents_data.append({
+                "id": agent_id,
+                "name": _world.agent_names.get(agent_id, agent_id),
+                "location": getattr(agent_data, 'location_id', 'unknown') if isinstance(agent_data, object) else str(agent_data),
+            })
+
+    recent_dialogues = _dialogue_mgr._sessions.values().__iter__().__next__().conversation_log[-20:] if _dialogue_mgr._sessions else []
+
+    return {
+        "tick_id": getattr(_world, '_tick_id', 0),
+        "time_of_day": str(getattr(_world, '_time_of_day', 'unknown')),
+        "weather": str(getattr(_world, '_weather', 'unknown')),
+        "agents": agents_data,
+        "locations": list(_world.get_all_locations().keys()) if hasattr(_world, 'get_all_locations') else [],
+        "dialogues": [
+            {"from": d.from_agent, "to": d.to_agent, "utterance": d.utterance, "micro_action": getattr(d, 'micro_action', None), "tick": getattr(d, 'tick', 0)}
+            for d in recent_dialogues
+        ]
+    }
 
 
 if __name__ == "__main__":

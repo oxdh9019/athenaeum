@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_400_10",
+  "agent_id": "char_1",
+  "summary_text": "化学系陈建国与中文系林晓华、张卫国交流，从实验失败聊到文学辩论，陈建国尝试用化学视角拆解文学，双方对彼此领域产生浓厚兴趣，约定未来深入探讨。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "curious",
+  "importance_score": 0.85,
+  "tick_created": 400,
+  "core_memory": false
+}

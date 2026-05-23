@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_420_10",
+  "agent_id": "char_1",
+  "summary_text": "赵无伤与苏媚娘、李延年重逢，虽感叹朝堂暗流涌动、太学危机四伏，但在彼此陪伴中重拾温暖。他劝慰友人放下忧愤，共话余生，情感由担忧转为温情与坚定。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 420,
+  "core_memory": false
+}

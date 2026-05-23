@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_990_10",
+  "agent_id": "char_1",
+  "summary_text": "陈阿海与赵大山、林思雨会面，以海鲜新鲜度为引子，深入探讨渔船异常偏航现象。陈阿海分析船只似在等待风眼，双方从日常寒暄转向对海上动态的关切交流。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "curious",
+  "importance_score": 0.85,
+  "tick_created": 990,
+  "core_memory": false
+}

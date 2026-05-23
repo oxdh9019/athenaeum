@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  world-pulse:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+    volumes:
+      - ./data:/app/data
+    networks:
+      - world-pulse-network
+
+networks:
+  world-pulse-network:
+    driver: bridge

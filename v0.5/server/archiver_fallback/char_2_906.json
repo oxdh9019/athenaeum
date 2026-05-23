@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_906_11",
+  "agent_id": "char_2",
+  "summary_text": "苏媚娘与李延年深情对话，以茶喻情，表达彼此心意相通、永不分离的坚定承诺。她视对方为寒夜暖春，愿共守清欢岁月，情感真挚动人。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 906,
+  "core_memory": false
+}

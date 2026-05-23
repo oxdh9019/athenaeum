@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_290_10",
+  "agent_id": "char_3",
+  "summary_text": "张卫国与老林在湖风中共叙旧情，互道保重与期待重逢。两人分享温暖回忆，约定未来继续把快乐过成诗，情感深厚且充满烟火气。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 290,
+  "core_memory": false
+}

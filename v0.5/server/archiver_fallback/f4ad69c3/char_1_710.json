@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_710_10",
+  "agent_id": "char_1",
+  "summary_text": "陈阿海与赵大山、林思雨讨论海货行情异常上涨及风浪变化，推测有人囤货或存在暗流。三人决定前往码头调查，陈阿海邀请赵大山同行，气氛从闲聊转为共同探索未知风险。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "curious",
+  "importance_score": 0.85,
+  "tick_created": 710,
+  "core_memory": false
+}

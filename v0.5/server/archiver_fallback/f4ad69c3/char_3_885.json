@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_885_10",
+  "agent_id": "char_3",
+  "summary_text": "赵大山与陈阿海因老张守口如瓶，决定前往码头探寻水底秘密。两人约定塔顶相见，在热茶与海风的陪伴下，从急切探询转为温情共勉，共同珍惜当下美好时光。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.85,
+  "tick_created": 885,
+  "core_memory": false
+}

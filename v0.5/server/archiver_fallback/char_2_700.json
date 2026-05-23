@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_700_10",
+  "agent_id": "char_2",
+  "summary_text": "新生林晓华向退休教师陈建国请教文学与科学结合的问题，通过比喻探讨《水浒传》《西游记》等作品，并立志将“抬头看世界”的理念铭记，期待提出深刻问题。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "curious",
+  "importance_score": 0.9,
+  "tick_created": 700,
+  "core_memory": false
+}

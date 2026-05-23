@@ -1,0 +1,127 @@
+文档二：架构核心决策记录 (Architecture Decision Records, ADRs)
+
+版本：1.0
+日期：2026-05-08
+状态：已确认
+用途：记录那些“后期不可逆转或修改成本极高”的架构决策，供团队执行和评审。
+
+ADR-001: Agent 决策流程采用结构化意图 + 仲裁两层模型
+
+决策：Agent 思考生成的不再是自由文本，而是结构化的动作意图，再经由必须执行的仲裁层检查，最后才展开为自然语言对话。
+
+理由：
+
+纯 LLM 生成行为不可控，容易出现人格偏移、循环对话和逻辑矛盾。
+意图结构化后可以精确审计、调试和演化；仲裁可以统一处理核心本能约束，不依赖 Prompt 脆弱防御。
+影响：
+
+所有 Agent 内部必须实现 decide() → arbitrate() → express() 三阶段。
+意图 Schema 必须在 V0.2 定义并长期保持稳定。
+这是一项不可回溯的架构约束，即使 V0.1 单 Agent 也得建立意图意识。
+Schema 示例（初版）：
+
+json
+{
+  "intent_type": "greet|ask|share|invite|flee|wait",
+  "target": "agent_id or location_id",
+  "reasoning": "自然语言内部独白",
+  "urgency": 0.0-1.0,
+  "emotion": "warm|anxious|curious|neutral"
+}
+ADR-002: 统一消息契约与 Topic 命名空间
+
+决策：在 V0.2 定义并固定以下系统级消息 Topic 和 Schema，后期 EventBus 实现以此为唯一标准。
+
+消息契约表：
+
+Topic	方向	消息体关键字段	约束
+world.tick.{tick_id}	WorldX→Agent	tick_id, game_time, locations_summary, global_events[]	只提供片段世界状态，不包含其他 Agent 内部状态
+agent.intent.{agent_id}	Agent→WorldX	agent_id, tick_id, intent (参照 ADR-001)	必须包含 reasoning 用于审计
+agent.dialogue.{from}.{to}	Agent→Agent	from_id, to_id, tick_id, utterance, emotion_tag	只能传递自然语言话语，不可包含内部状态
+system.event.{event_id}	System→All	event_id, type, description, affected_agents[]	叙事注入专用，优先级高于 agent 自发行为
+理由：
+
+模块间通信的唯一语言。格式不一致会导致集成灾难。
+划分了“可感知信息”与“不可知内部状态”的边界（如 agent.intent 不作为广播）。
+影响：
+
+所有模块开发必须遵循此契约，测试时进行 Schema 校验。
+后期引入 NATS 只需更换传输层，消息格式不变。
+ADR-003: 欲望状态由需求队列驱动，而非静态浮点数
+
+决策：将 SPEC 中的纯欲望浮点维度 (TR/CS/SA) 改为 “需求队列 + 映射函数” 结构。需求队列是原始动机，欲望维度是派生结果，同时影响决策。
+
+模型草图：
+
+python
+class Need:
+    name: str       # hunger, safety, belonging, novelty, mastery...
+    level: float    # 0.0 (very satisfied) ~ 1.0 (desperate)
+    target: Optional[str]  # 如属于社交需求，目标是某角色ID
+
+class Agent:
+    needs: List[Need]       # 动态队列，按优先级排序
+    desire_state: DesireState  # TR/CS/SA 由 needs 实时计算
+
+    def update_desires():
+        TR = max(needs['safety'].level, needs['stability'].level) * env_threat_factor
+        SA = needs['belonging'].level * social_sensitivity ...
+理由：
+
+纯欲望维度无法解释具体行为动机（“为什么送面包？”）。
+需求队列让行为可解释、可调试，同时保持 SPEC 原有欲望维度对外的一致性。
+影响：
+
+V0.2 即实施此模型，哪怕需求只有 3-4 种。
+后期增加新需求（如“好奇心”“权力欲”）无需改动决策主流程。
+ADR-004: 感知系统分级刷新机制
+
+决策：Agent 对他人状态的推断 (_infer_state) 不允许每个 Tick 都调用 LLM。引入缓存+启发式规则。
+
+规则：
+
+过去 3 个 Tick 内未与该目标互动，且目标未发生重大行为改变 → 使用上次推断结果。
+发生互动或收到目标的重大事件通知 → 触发一次 LLM 刷新，并重置缓存。
+缓存过期时间随关系强度衰减：关系越疏远，推断保持得越久（因为不关心）。
+理由：
+
+LLM 推断成本极高，5 角色世界可迅速触发数十次/ Tick。
+人类社交中也不会时刻推理他人心理状态，符合真实感。
+影响：
+
+所有 Agent 的观察模块必须包含推断缓存字典。
+重大事件判定规则需要在 WorldX 提供元数据。
+ADR-005: 叙事事件注入作为系统的显式设计
+
+决策：WorldX 提供 inject_narrative_event() 接口，系统定期评估“戏剧张力”，张力低于阈值时生成一个轻量级系统事件（如神秘包裹、陌生人到访）。
+
+评估参数：最近 N 小时内的冲突次数、关系值变化方差、新事件密度。
+
+理由：
+
+纯依赖 Agent 自发涌现，高频结果是平淡日常生活，难以产出“故事”。
+注入机制是可控的调味料，不破坏自主性，但保证观赏性。
+影响：
+
+V0.3 的 WorldX 需要实现张力评估和注入接口，即使初期不注入复杂事件。
+事件类型需要可扩展，且不侵入 Agent 决策核心逻辑（作为一个外部输入）。
+ADR-006: 紧急成本控制与不可绕过权限
+
+决策：所有 LLM 调用必须通过统一门控 LLMGateway，该网关实现：
+
+每日总预算（Token 或费用上限）
+单 Tick 内同一 Agent 最大调用次数
+降级策略：当预算耗尽时，所有非关键调用使用缓存或规则回退，关键调用（如冲突调解）保留最小配额。
+理由：
+
+连续运行场景下，代码错误或 Agent 行为异常可能瞬间花光预算。
+这是运营安全底线，必须硬编码，不可被插件或配置绕过。
+影响：
+
+所有 LLM 接入必须走网关，成为必须遵守的约束。
+文档使用指引
+
+路线图用于排期和迭代目标设定。
+ADR 用于代码评审和架构守护，任何违反这些决策的 PR 需要重新讨论 ADR 废弃或修改。
+随着项目推进，新的不可逆决策应及时补充为新的 ADR。
+以上两份文档加上已有的 SPEC v2.0，构成了 Athenaeum 开发所需完整的指导体系。

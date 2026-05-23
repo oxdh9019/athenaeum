@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_437_10",
+  "agent_id": "char_2",
+  "summary_text": "苏媚娘与无伤（李延年）在茶香与阳光中漫步长谈，从日常问候深入至内心独白。她多次表达因对方的陪伴而感到温暖与踏实，愿将苦日子熬成甜，共同珍藏心底的小欢喜，情感真挚且深厚。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 437,
+  "core_memory": false
+}

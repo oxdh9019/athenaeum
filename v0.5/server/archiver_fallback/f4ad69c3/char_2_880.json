@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_880_10",
+  "agent_id": "char_2",
+  "summary_text": "林思雨与赵大山探讨暗流问题，从感性比喻转向科学分析，强调携带仪器实地测量。两人约定在码头边喝茶，结合数据与直觉共同解决难题，氛围温馨且充满期待。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.85,
+  "tick_created": 880,
+  "core_memory": false
+}

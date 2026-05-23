@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_430_10",
+  "agent_id": "char_1",
+  "summary_text": "陈阿海与赵大山、林思雨约定共进海鲜餐，边吃边聊。他强调码头调度顺畅、人手利落对保障海味新鲜及员工生活舒坦的重要性，并表达团队齐心、日子过得带劲的积极情感。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.85,
+  "tick_created": 430,
+  "core_memory": false
+}

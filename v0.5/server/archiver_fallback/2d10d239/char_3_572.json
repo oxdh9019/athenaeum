@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_572_10",
+  "agent_id": "char_3",
+  "summary_text": "张卫国与晓华约定未来边喝边聊，深入探讨反应机理。对话中充满温情，强调陪伴让岁月温柔，心意相通使日常充满滋味，关系在轻松交流中愈发深厚。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 572,
+  "core_memory": false
+}

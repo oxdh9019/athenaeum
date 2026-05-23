@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_420_10",
+  "agent_id": "char_2",
+  "summary_text": "林晓华与卫国哥重逢，分享校园回忆并探讨学习方法。林晓华好奇学霸经验，担忧化学实验操作风险，但被卫国哥的陪伴与鼓励深深温暖，两人约定未来继续携手共度青春时光。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 420,
+  "core_memory": false
+}

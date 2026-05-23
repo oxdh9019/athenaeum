@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_600_10",
+  "agent_id": "char_3",
+  "summary_text": "赵大山因担心海货批发生意风险而焦虑不安，对方通过细致分析方案、强调共同守护，使其重拾信心，双方约定携手出海，情感从担忧转为温暖坚定。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 600,
+  "core_memory": false
+}

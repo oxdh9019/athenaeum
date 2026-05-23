@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_1006_10",
+  "agent_id": "char_3",
+  "summary_text": "赵大山与阿海在海鲜批发业务中探讨“真新鲜”标准，确认带子品质后，赵大山邀请阿海包场庆贺，两人约定共进晚餐，展现深厚信任与行业共鸣。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 1006,
+  "core_memory": false
+}

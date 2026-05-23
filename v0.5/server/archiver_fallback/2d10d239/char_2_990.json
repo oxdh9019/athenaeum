@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_990_10",
+  "agent_id": "char_2",
+  "summary_text": "林晓华与退休的卫国老师品茶叙旧，从诗词浪漫聊到鲁迅与沈从文的风格对比。林晓华偏爱沈从文的温柔，卫老师则强调冷冽与温柔共同构成完整人心。两人将岁月故事揉进茶香，情感由客套转为深层共鸣。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 990,
+  "core_memory": false
+}

@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_670_10",
+  "agent_id": "char_1",
+  "summary_text": "化学系陈建国与中文系林晓华、张卫国叙旧，将文学创作比作化学反应：《红楼梦》如聚合反应，《水浒传》似链式反应，《西游记》若裂变。三人以茶会友，在探讨中重拾科研与文学交织的兴奋感。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.85,
+  "tick_created": 670,
+  "core_memory": false
+}

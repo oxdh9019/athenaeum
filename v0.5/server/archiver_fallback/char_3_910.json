@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_910_10",
+  "agent_id": "char_3",
+  "summary_text": "李延年与媚娘在静室中深情对话，探讨愁绪与人生意义。两人互诉衷肠，以棋局喻心，表达愿共度清欢岁月、永不分离的坚定情感。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 910,
+  "core_memory": false
+}

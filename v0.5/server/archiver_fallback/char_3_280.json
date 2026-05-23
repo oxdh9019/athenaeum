@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_280_10",
+  "agent_id": "char_3",
+  "summary_text": "对话中张卫国回忆与爷爷的温馨互动，描述爷爷表面严厉实则充满关爱，如担心枣子掉落、偷偷塞枣暖手等细节。两人共同感受岁月静好，将时光酿成温暖诗篇，情感真挚动人。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 280,
+  "core_memory": false
+}

@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_400_10",
+  "agent_id": "char_3",
+  "summary_text": "张卫国与老同学晓华重逢，回忆大学趣事，约定在校门口老茶馆品“青春陈酿”，感慨岁月虽老情谊不老，期待共饮至白头。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 400,
+  "core_memory": false
+}

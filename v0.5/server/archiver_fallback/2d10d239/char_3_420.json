@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_420_10",
+  "agent_id": "char_3",
+  "summary_text": "老张与晓华、建国在轻松氛围中探讨科研试错、历史感悟与生活哲理，强调安全与耐心，约定未来聚会，传递温暖厚重的岁月感。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.85,
+  "tick_created": 420,
+  "core_memory": false
+}

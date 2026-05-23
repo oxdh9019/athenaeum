@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_1005_10",
+  "agent_id": "char_3",
+  "summary_text": "张卫国与老陈在茶香中回顾昔日历史课争辩，感叹从激烈争论到如今闲话古今的珍贵变化，视这段共同经历为最纯真的青春与深厚缘分，将日子过成诗。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 1005,
+  "core_memory": false
+}

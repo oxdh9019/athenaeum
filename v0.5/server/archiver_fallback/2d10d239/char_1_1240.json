@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_1240_10",
+  "agent_id": "char_1",
+  "summary_text": "陈建国与林晓华、张卫国重逢，约定在老茶馆叙旧。陈建国以化学视角探讨文学结构，林晓华回应情感流动，三人交流思维差异，氛围温馨且充满好奇。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 1240,
+  "core_memory": false
+}

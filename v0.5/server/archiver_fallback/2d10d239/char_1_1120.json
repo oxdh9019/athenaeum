@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_1120_10",
+  "agent_id": "char_1",
+  "summary_text": "陈建国与卫哥通过文学隐喻探讨温柔与痛感的辩证关系，认为争执终化茶香，无声的暖意如炭火融化寒冬，两人约定继续品茗细聊余生故事。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 1120,
+  "core_memory": false
+}

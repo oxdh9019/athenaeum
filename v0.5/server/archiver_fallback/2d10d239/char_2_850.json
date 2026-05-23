@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_850_10",
+  "agent_id": "char_2",
+  "summary_text": "林晓华与张卫国约定在食堂通过古文点菜进行互动，强调慢聊的亲切感。林晓华分享古人促膝长谈的踏实感，两人期待边笑边学，共同品味人间烟火，关系在轻松交流中深化。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.85,
+  "tick_created": 850,
+  "core_memory": false
+}

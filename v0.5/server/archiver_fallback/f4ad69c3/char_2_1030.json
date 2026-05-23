@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_1030_10",
+  "agent_id": "char_2",
+  "summary_text": "林思雨与陈阿海（大山）围绕渔港海鲜生意及渔船异常航向数据展开深入交流。两人从庆祝生意兴隆过渡到分析台风边缘渔船信号干扰问题，最终决定联合深挖信号源，体现了从喜悦到严谨探究的情感转变。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "curious",
+  "importance_score": 0.85,
+  "tick_created": 1030,
+  "core_memory": false
+}

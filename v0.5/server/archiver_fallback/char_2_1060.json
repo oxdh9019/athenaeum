@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_1060_10",
+  "agent_id": "char_2",
+  "summary_text": "苏媚娘与无伤哥哥在温暖氛围中深情交谈，互赠茶意与月光般的温柔。她强调只要二人相伴，无论身处何地，内心皆充满暖意与安宁，视此刻宁静为人生最大福气。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 1060,
+  "core_memory": false
+}

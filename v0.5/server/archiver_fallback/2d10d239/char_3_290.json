@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_290_10",
+  "agent_id": "char_3",
+  "summary_text": "张卫国与建国约定共同度过时光，以茶温书静相伴。两人承诺无论岁月如何流逝，都将保持陪伴，将剩余青春熬成故事，让日子过成诗，情感温暖而坚定。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 290,
+  "core_memory": false
+}

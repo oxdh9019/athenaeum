@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_270_10",
+  "agent_id": "char_1",
+  "summary_text": "陈建国与张哥讨论化学沉淀反应，类比历史转折，约定在图书馆边喝气泡水边聊。虽提及潜在气体爆炸风险及安全原则，但双方保持轻松幽默，强调安全与陪伴，将平淡日常聊出浪漫与热闹。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.85,
+  "tick_created": 270,
+  "core_memory": false
+}

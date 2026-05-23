@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_740_10",
+  "agent_id": "char_2",
+  "summary_text": "苏媚娘与无伤在偏殿品茶闲谈，互诉衷肠。她视无伤为难得知己，愿心手相连共闯光明；无伤亦感其真诚温暖。二人于寒夜中共享温情，将这份深厚情谊细细品味，直至天明。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 740,
+  "core_memory": false
+}

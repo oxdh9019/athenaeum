@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_747_10",
+  "agent_id": "char_3",
+  "summary_text": "李延年与媚娘在偏殿闲谈，从春日闲趣聊到棋局枯荣，情感由平和转为深情。二人互诉陪伴之福，愿细水长流永不分离，氛围温馨而坚定。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 747,
+  "core_memory": false
+}

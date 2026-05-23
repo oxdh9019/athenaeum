@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_870_10",
+  "agent_id": "char_1",
+  "summary_text": "陈阿海与大山多次提议前往码头，质疑老张的保守态度，主张依靠直觉与热茶促膝长谈而非仪器，坚信能发现暗流中的大鱼，展现出对未知冒险的强烈好奇与信任。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "curious",
+  "importance_score": 0.85,
+  "tick_created": 870,
+  "core_memory": false
+}

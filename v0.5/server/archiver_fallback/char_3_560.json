@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_560_10",
+  "agent_id": "char_3",
+  "summary_text": "张卫国与晓华约定共赴老茶馆，重温旧日趣事。两人互道珍重，誓言细水长流，以茶代酒共庆岁月，情感温暖深厚。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 560,
+  "core_memory": false
+}

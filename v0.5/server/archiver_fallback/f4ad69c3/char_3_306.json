@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_306_10",
+  "agent_id": "char_3",
+  "summary_text": "赵大山与阿海在茶叙中探讨数据背后的鱼群规律，确认其可能揭示渔港爆发秘密。尽管赵大山起初坚持冒险卖货，但在阿海的关心下态度软化，最终决定放下身段，回家养身体，共同深入分析数据线索。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 306,
+  "core_memory": false
+}

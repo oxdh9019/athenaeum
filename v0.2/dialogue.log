@@ -1,0 +1,349 @@
+2026-05-08 20:53:12,866 [DEBUG] asyncio: Using selector: KqueueSelector
+2026-05-08 20:53:12,894 [INFO] llm_gateway: LLM Gateway 初始化完成，模型: MiniMax-M2.7，API地址: https://api.minimaxi.com/anthropic
+2026-05-08 20:53:12,906 [INFO] dialogue_engine: [对话引擎启动] 艾琳 ↔ 马克 | 最大轮次: 20
+2026-05-08 20:53:12,923 [DEBUG] anthropic._base_client: Request options: {'method': 'post', 'url': '/v1/messages', 'timeout': Timeout(connect=5.0, read=600, write=600, pool=600), 'files': None, 'idempotency_key': 'stainless-python-retry-2da542b8-b925-447a-8ec9-7cc786e73a39', 'content': None, 'json_data': {'max_tokens': 2000, 'messages': [{'role': 'user', 'content': [{'type': 'text', 'text': '## 对话历史\n（无记忆）\n\n## 情境\n艾琳 想对 马克 说: 艾琳 主动向老朋友 马克 打招呼\n请以 艾琳 的身份，说出符合当前意图的自然对话。'}]}], 'model': 'MiniMax-M2.7', 'system': '你是 艾琳。\n\n## 性格\n开放性: 0.7 — 好奇、创新、追求新奇\n尽责性: 0.9 — 细心、有条理、尽职尽责\n外向性: 0.3 — 内向、独处、低调\n宜人性: 0.8 — 合作、信任、温和\n神经质: 0.4 — 稳定、冷静、自信\n共情能力: 0.7\n幽默感: 0.3\n野心: 0.5\n忠诚: 0.9\n勇气: 0.4\n耐心: 0.8\n慷慨: 0.5\n\n## 当前关系\n好友 — 互相关心，关系融洽\n\n## 当前意图\n- 类型: greet\n- 目标: max\n- 情绪: warm\n- 内心独白: 艾琳 主动向老朋友 马克 打招呼\n\n## 语气指导\n温和、友善、真诚\n\n## 对话要求\n打招呼，开启对话，语气轻松友好。\n\n你只能输出角色说出的对话内容，不要加入动作描写（如 "*走进房间*"）。\n回复长度: 1-3 句话。', 'temperature': 0.8}}
+2026-05-08 20:53:12,924 [DEBUG] anthropic._base_client: Sending HTTP Request: POST https://api.minimaxi.com/anthropic/v1/messages
+2026-05-08 20:53:12,926 [DEBUG] httpcore.connection: connect_tcp.started host='127.0.0.1' port=7897 local_address=None timeout=5.0 socket_options=None
+2026-05-08 20:53:12,927 [DEBUG] httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x10a9ae3c0>
+2026-05-08 20:53:12,927 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'CONNECT']>
+2026-05-08 20:53:12,927 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-05-08 20:53:12,927 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'CONNECT']>
+2026-05-08 20:53:12,927 [DEBUG] httpcore.http11: send_request_body.complete
+2026-05-08 20:53:12,927 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'CONNECT']>
+2026-05-08 20:53:12,927 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'Connection established', [])
+2026-05-08 20:53:12,927 [DEBUG] httpcore.proxy: start_tls.started ssl_context=<ssl.SSLContext object at 0x10a819eb0> server_hostname='api.minimaxi.com' timeout=5.0
+2026-05-08 20:53:12,961 [DEBUG] httpcore.proxy: start_tls.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x10a99ee90>
+2026-05-08 20:53:12,961 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'POST']>
+2026-05-08 20:53:12,962 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-05-08 20:53:12,962 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'POST']>
+2026-05-08 20:53:12,962 [DEBUG] httpcore.http11: send_request_body.complete
+2026-05-08 20:53:12,962 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'POST']>
+2026-05-08 20:53:18,524 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Fri, 08 May 2026 12:53:18 GMT'), (b'Content-Type', b'application/json; charset=utf-8'), (b'Content-Length', b'565'), (b'Connection', b'keep-alive'), (b'Trace-Id', b'064d0fb9f12e1a5d0a9709b9760d47d8'), (b'X-Session-Id', b'd9cf2c22c360447d1e6284f5c1b73914'), (b'X-Mm-Request-Id', b'2017166217218888041_1778244793izqcyv'), (b'Minimax-Request-Id', b'c143eb2cdb370d0862b4d97d13ba1205'), (b'alb_receive_time', b'1778244792.992'), (b'alb_request_id', b'10c99dc6623d64892885fd59183b67961c806cb1')])
+2026-05-08 20:53:18,525 [INFO] httpx: HTTP Request: POST https://api.minimaxi.com/anthropic/v1/messages "HTTP/1.1 200 OK"
+2026-05-08 20:53:18,525 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'POST']>
+2026-05-08 20:53:18,525 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-05-08 20:53:18,525 [DEBUG] httpcore.http11: response_closed.started
+2026-05-08 20:53:18,526 [DEBUG] httpcore.http11: response_closed.complete
+2026-05-08 20:53:18,526 [DEBUG] anthropic._base_client: HTTP Response: POST https://api.minimaxi.com/anthropic/v1/messages "200 OK" Headers({'date': 'Fri, 08 May 2026 12:53:18 GMT', 'content-type': 'application/json; charset=utf-8', 'content-length': '565', 'connection': 'keep-alive', 'trace-id': '064d0fb9f12e1a5d0a9709b9760d47d8', 'x-session-id': 'd9cf2c22c360447d1e6284f5c1b73914', 'x-mm-request-id': '2017166217218888041_1778244793izqcyv', 'minimax-request-id': 'c143eb2cdb370d0862b4d97d13ba1205', 'alb_receive_time': '1778244792.992', 'alb_request_id': '10c99dc6623d64892885fd59183b67961c806cb1'})
+2026-05-08 20:53:18,526 [DEBUG] anthropic._base_client: request_id: None
+2026-05-08 20:53:18,540 [DEBUG] llm_gateway: LLM调用: input=307 output=28
+2026-05-08 20:53:18,540 [INFO] dialogue_generator: [艾琳] → [马克]: ...
+2026-05-08 20:53:18,540 [INFO] dialogue_engine: [开场] 艾琳: 
+2026-05-08 20:53:18,540 [DEBUG] dialogue_engine: [回合 2] 发言者: 马克
+2026-05-08 20:53:18,541 [DEBUG] anthropic._base_client: Request options: {'method': 'post', 'url': '/v1/messages', 'timeout': Timeout(connect=5.0, read=600, write=600, pool=600), 'files': None, 'idempotency_key': 'stainless-python-retry-2b8aadd0-6d67-4748-a7e8-7ed946f6be8b', 'content': None, 'json_data': {'max_tokens': 2000, 'messages': [{'role': 'user', 'content': [{'type': 'text', 'text': '## 我与 艾琳 的对话历史\n- elena 对 max: \n\n## 我的记忆上下文\n\n\n## 当前情境\n艾琳（elena）就在我面前。我应该如何行动？\n\n请输出 JSON 格式的意图。'}]}], 'model': 'MiniMax-M2.7', 'system': '你是 马克（ID: max），正在 翡翠城。\n\n## 身份\n你是一个有血有肉的角色，有自己的性格、欲望和需求。\n\n## 性格描述\n开放性: 0.6 — 传统、保守、循规蹈矩\n尽责性: 0.7 — 细心、有条理、尽职尽责\n外向性: 0.9 — 外向、活跃、爱社交\n宜人性: 0.8 — 合作、信任、温和\n神经质: 0.2 — 稳定、冷静、自信\n共情能力: 0.8\n幽默感: 0.8\n野心: 0.6\n忠诚: 0.7\n勇气: 0.6\n耐心: 0.5\n慷慨: 0.7\n\n## 当前需求状态\n## 当前需求状态\n- safety: 0.10 [满足] \n- belonging: 0.30 [满足] \n- novelty: 0.60 [渴望] \n\n当前最强烈需求: novelty（0.60）\n\n## 输出要求\n\n请严格按以下 JSON Schema 输出意图，不要输出任何其他内容：\n\n{\n  "intent_type": "greet|ask|share|invite|flee|wait|change_topic",\n  "target": "对方角色ID或null",\n  "reasoning": "你的自然语言内部独白，描述为什么产生这个意图",\n  "urgency": 0.0到1.0之间的浮点数，\n  "emotion": "warm|anxious|curious|neutral|wary"\n}\n\n\n意图类型说明:\n- greet: 打招呼、开启对话\n- ask: 向对方提问、寻求信息\n- share: 分享自己的经历、想法或感受\n- invite: 邀请对方参与某事\n- flee: 回避、退出现有对话\n- wait: 保持沉默或观察\n- change_topic: 主动转换话题，打破僵局\n\n请根据当前需求状态和对话上下文，选择最合适的意图类型。', 'temperature': 0.2}}
+2026-05-08 20:53:18,541 [DEBUG] anthropic._base_client: Sending HTTP Request: POST https://api.minimaxi.com/anthropic/v1/messages
+2026-05-08 20:53:18,542 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'POST']>
+2026-05-08 20:53:18,542 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-05-08 20:53:18,542 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'POST']>
+2026-05-08 20:53:18,542 [DEBUG] httpcore.http11: send_request_body.complete
+2026-05-08 20:53:18,542 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'POST']>
+2026-05-08 20:53:34,812 [DEBUG] httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Fri, 08 May 2026 12:53:34 GMT'), (b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Vary', b'Accept-Encoding'), (b'Trace-Id', b'064d0fbec3eb376a2e954062e422625f'), (b'X-Session-Id', b'8a177df7c1be91c21afe2a020654ae9a'), (b'X-Mm-Request-Id', b'2017166217218888041_1778244798sjumwh'), (b'Minimax-Request-Id', b'db63c3dba052a946fac1d71e92445c1c'), (b'alb_receive_time', b'1778244798.573'), (b'alb_request_id', b'00c5e843b34ff821716a56d7cd591e046d28c346'), (b'Content-Encoding', b'gzip')])
+2026-05-08 20:53:34,815 [INFO] httpx: HTTP Request: POST https://api.minimaxi.com/anthropic/v1/messages "HTTP/1.1 200 OK"
+2026-05-08 20:53:34,815 [DEBUG] httpcore.http11: receive_response_body.started request=<Request [b'POST']>
+2026-05-08 20:53:34,815 [DEBUG] httpcore.http11: receive_response_body.complete
+2026-05-08 20:53:34,815 [DEBUG] httpcore.http11: response_closed.started
+2026-05-08 20:53:34,816 [DEBUG] httpcore.http11: response_closed.complete
+2026-05-08 20:53:34,816 [DEBUG] anthropic._base_client: HTTP Response: POST https://api.minimaxi.com/anthropic/v1/messages "200 OK" Headers({'date': 'Fri, 08 May 2026 12:53:34 GMT', 'content-type': 'application/json; charset=utf-8', 'transfer-encoding': 'chunked', 'connection': 'keep-alive', 'vary': 'Accept-Encoding', 'trace-id': '064d0fbec3eb376a2e954062e422625f', 'x-session-id': '8a177df7c1be91c21afe2a020654ae9a', 'x-mm-request-id': '2017166217218888041_1778244798sjumwh', 'minimax-request-id': 'db63c3dba052a946fac1d71e92445c1c', 'alb_receive_time': '1778244798.573', 'alb_request_id': '00c5e843b34ff821716a56d7cd591e046d28c346', 'content-encoding': 'gzip'})
+2026-05-08 20:53:34,816 [DEBUG] anthropic._base_client: request_id: None
+2026-05-08 20:53:34,816 [DEBUG] llm_gateway: LLM调用: input=483 output=272
+2026-05-08 20:53:34,817 [INFO] intent_generator: [马克] 意图生成 → greet | emotion=warm | urgency=0.50
+2026-05-08 20:53:34,817 [DEBUG] anthropic._base_client: Request options: {'method': 'post', 'url': '/v1/messages', 'timeout': Timeout(connect=5.0, read=600, write=600, pool=600), 'files': None, 'idempotency_key': 'stainless-python-retry-cabb2146-f440-42e0-973a-105124bcdcab', 'content': None, 'json_data': {'max_tokens': 2000, 'messages': [{'role': 'user', 'content': [{'type': 'text', 'text': '## 对话历史\n（无记忆）\n\n## 情境\n马克 想对 艾琳 说: 我是一个外向活跃的人，喜欢结交新朋友。现在艾琳就在我面前，这正好满足我对新鲜感的渴望。主动打招呼是自然的社交举动，也符合我的性格。\n请以 马克 的身份，说出符合当前意图的自然对话。'}]}], 'model': 'MiniMax-M2.7', 'system': '你是 马克。\n\n## 性格\n开放性: 0.6 — 传统、保守、循规蹈矩\n尽责性: 0.7 — 细心、有条理、尽职尽责\n外向性: 0.9 — 外向、活跃、爱社交\n宜人性: 0.8 — 合作、信任、温和\n神经质: 0.2 — 稳定、冷静、自信\n共情能力: 0.8\n幽默感: 0.8\n野心: 0.6\n忠诚: 0.7\n勇气: 0.6\n耐心: 0.5\n慷慨: 0.7\n\n## 当前关系\n好友 — 互相关心，关系融洽\n\n## 当前意图\n- 类型: greet\n- 目标: elena\n- 情绪: warm\n- 内心独白: 我是一个外向活跃的人，喜欢结交新朋友。现在艾琳就在我面前，这正好满足我对新鲜感的渴望。主动打招呼是自然的社交举动，也符合我的性格。\n\n## 语气指导\n温和、友善、真诚\n\n## 对话要求\n打招呼，开启对话，语气轻松友好。\n\n你只能输出角色说出的对话内容，不要加入动作描写（如 "*走进房间*"）。\n回复长度: 1-3 句话。', 'temperature': 0.8}}
+2026-05-08 20:53:34,818 [DEBUG] anthropic._base_client: Sending HTTP Request: POST https://api.minimaxi.com/anthropic/v1/messages
+2026-05-08 20:53:34,818 [DEBUG] httpcore.http11: send_request_headers.started request=<Request [b'POST']>
+2026-05-08 20:53:34,818 [DEBUG] httpcore.http11: send_request_headers.complete
+2026-05-08 20:53:34,818 [DEBUG] httpcore.http11: send_request_body.started request=<Request [b'POST']>
+2026-05-08 20:53:34,818 [DEBUG] httpcore.http11: send_request_body.complete
+2026-05-08 20:53:34,818 [DEBUG] httpcore.http11: receive_response_headers.started request=<Request [b'POST']>
+2026-05-08 20:54:41,525 [INFO] llm_gateway: LLM Gateway 初始化完成，模型: MiniMax-M2.7，API地址: https://api.minimaxi.com/anthropic
+2026-05-08 20:54:41,537 [INFO] dialogue_engine: [对话引擎启动] 艾琳 ↔ 马克 | 最大轮次: 20
+2026-05-08 20:54:46,476 [DEBUG] llm_gateway: LLM调用: input=115 output=97
+2026-05-08 20:54:46,476 [INFO] dialogue_generator: [艾琳] → [马克]: 马克，好久不见！最近怎么样？一切还顺利吗？...
+2026-05-08 20:54:46,476 [INFO] dialogue_engine: [开场] 艾琳: 马克，好久不见！最近怎么样？一切还顺利吗？
+2026-05-08 20:54:46,476 [DEBUG] dialogue_engine: [回合 2] 发言者: 马克
+2026-05-08 20:55:01,618 [DEBUG] llm_gateway: LLM调用: input=496 output=245
+2026-05-08 20:55:01,621 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.30
+2026-05-08 20:55:11,987 [DEBUG] llm_gateway: LLM调用: input=380 output=155
+2026-05-08 20:55:11,989 [INFO] dialogue_generator: [马克] → [艾琳]: 嘿Elena，好久不见！你最近怎么样？我刚结束一个超疯狂的项目，终于有时间喘口气了，终于能跟老朋友叙...
+2026-05-08 20:55:11,990 [INFO] dialogue_engine: [马克]: 嘿Elena，好久不见！你最近怎么样？我刚结束一个超疯狂的项目，终于有时间喘口气了，终于能跟老朋友叙叙旧啦。 | 意图: share | 关系变化: +0.050
+2026-05-08 20:55:11,990 [DEBUG] dialogue_engine: [回合 3] 发言者: 艾琳
+2026-05-08 20:55:22,525 [DEBUG] llm_gateway: LLM调用: input=529 output=361
+2026-05-08 20:55:22,525 [INFO] intent_generator: [艾琳] 意图生成 → ask | emotion=curious | urgency=0.40
+2026-05-08 20:55:34,075 [DEBUG] llm_gateway: LLM调用: input=365 output=175
+2026-05-08 20:55:34,078 [INFO] dialogue_generator: [艾琳] → [马克]: 哇，"超疯狂的项目"？你这吊人胃口的说法让我更好奇了，快跟我说说到底是什么项目！...
+2026-05-08 20:55:34,078 [INFO] dialogue_engine: [艾琳]: 哇，"超疯狂的项目"？你这吊人胃口的说法让我更好奇了，快跟我说说到底是什么项目！ | 意图: ask | 关系变化: +0.020
+2026-05-08 20:55:34,079 [DEBUG] dialogue_engine: [回合 4] 发言者: 马克
+2026-05-08 20:55:45,889 [DEBUG] llm_gateway: LLM调用: input=642 output=280
+2026-05-08 20:55:45,892 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.50
+2026-05-08 20:55:49,668 [DEBUG] llm_gateway: LLM调用: input=462 output=134
+2026-05-08 20:55:49,668 [INFO] dialogue_generator: [马克] → [艾琳]: 太好了Elena，你愿意听吗？这个项目是为一家科技公司设计沉浸式体验空间，我们要在三个月内把一个废弃...
+2026-05-08 20:55:49,669 [INFO] dialogue_engine: [马克]: 太好了Elena，你愿意听吗？这个项目是为一家科技公司设计沉浸式体验空间，我们要在三个月内把一个废弃工厂改造成未来感的展 | 意图: share | 关系变化: +0.050
+2026-05-08 20:55:49,669 [DEBUG] dialogue_engine: [回合 5] 发言者: 艾琳
+2026-05-08 20:55:56,577 [DEBUG] llm_gateway: LLM调用: input=233 output=266
+2026-05-08 20:55:56,578 [INFO] intent_generator: [艾琳] 意图生成 → ask | emotion=curious | urgency=0.60
+2026-05-08 20:56:02,288 [DEBUG] llm_gateway: LLM调用: input=417 output=158
+2026-05-08 20:56:02,291 [INFO] dialogue_generator: [艾琳] → [马克]: 对了，你还没告诉我具体是什么呢！那些意想不到的挑战是什么？最后呈现出来的震撼效果又是怎样的？...
+2026-05-08 20:56:02,291 [INFO] dialogue_engine: [艾琳]: 对了，你还没告诉我具体是什么呢！那些意想不到的挑战是什么？最后呈现出来的震撼效果又是怎样的？ | 意图: ask | 关系变化: +0.020
+2026-05-08 20:56:02,292 [DEBUG] dialogue_engine: [回合 6] 发言者: 马克
+2026-05-08 20:56:14,140 [DEBUG] llm_gateway: LLM调用: input=837 output=382
+2026-05-08 20:56:14,143 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.50
+2026-05-08 20:56:32,984 [INFO] dialogue_engine: [用户附身] elena: 也想去看看
+2026-05-08 20:56:34,442 [DEBUG] llm_gateway: LLM调用: input=563 output=474
+2026-05-08 20:56:34,443 [INFO] dialogue_generator: [马克] → [艾琳]: 哇，听起来你这个项目超棒的！不过说到疯狂的项目，我最近也在做一个挺有意思的——是个沉浸式体验空间的设...
+2026-05-08 20:56:34,443 [INFO] dialogue_engine: [马克]: 哇，听起来你这个项目超棒的！不过说到疯狂的项目，我最近也在做一个挺有意思的——是个沉浸式体验空间的设计，正好趁这个机会好 | 意图: share | 关系变化: +0.050
+2026-05-08 20:56:34,443 [DEBUG] dialogue_engine: [回合 7] 发言者: 艾琳
+2026-05-08 20:56:34,443 [INFO] dialogue_generator: [艾琳] → [马克]: 也想去看看...
+2026-05-08 20:56:34,443 [INFO] dialogue_engine: [艾琳]: 也想去看看 | 意图: share | 关系变化: +0.000
+2026-05-08 20:56:34,443 [DEBUG] dialogue_engine: [回合 8] 发言者: 马克
+2026-05-08 20:56:38,402 [WARNING] huggingface_hub.utils._http: Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-05-08 20:56:57,347 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.565 (阈值: 0.7)
+2026-05-08 20:56:57,353 [INFO] dialogue_engine: [用户退出附身]
+2026-05-08 20:57:07,743 [DEBUG] llm_gateway: LLM调用: input=945 output=414
+2026-05-08 20:57:07,746 [INFO] intent_generator: [马克] 意图生成 → invite | emotion=warm | urgency=0.60
+2026-05-08 20:57:10,689 [DEBUG] llm_gateway: LLM调用: input=639 output=107
+2026-05-08 20:57:10,690 [INFO] dialogue_generator: [马克] → [艾琳]: 那正好！我这边项目刚好进入收尾阶段，要不来现场看看？我们可以一起交流交流经验，说不定还能碰撞出什么新...
+2026-05-08 20:57:10,690 [INFO] dialogue_engine: [马克]: 那正好！我这边项目刚好进入收尾阶段，要不来现场看看？我们可以一起交流交流经验，说不定还能碰撞出什么新灵感呢！ | 意图: invite | 关系变化: +0.040
+2026-05-08 20:57:10,690 [DEBUG] dialogue_engine: [回合 9] 发言者: 艾琳
+2026-05-08 20:57:30,291 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.589 (阈值: 0.7)
+2026-05-08 20:57:48,143 [DEBUG] llm_gateway: LLM调用: input=808 output=451
+2026-05-08 20:57:48,144 [INFO] intent_generator: [艾琳] 意图生成 → invite | emotion=curious | urgency=0.60
+2026-05-08 20:58:01,021 [DEBUG] llm_gateway: LLM调用: input=529 output=506
+2026-05-08 20:58:01,021 [INFO] dialogue_generator: [艾琳] → [马克]: 太棒了，我超想去看看的！对了，你那边什么时候方便？我得好好安排一下时间，绝对不想错过这么难得的机会。...
+2026-05-08 20:58:01,021 [INFO] dialogue_engine: [艾琳]: 太棒了，我超想去看看的！对了，你那边什么时候方便？我得好好安排一下时间，绝对不想错过这么难得的机会。 | 意图: invite | 关系变化: +0.000
+2026-05-08 20:58:01,022 [DEBUG] dialogue_engine: [回合 10] 发言者: 马克
+2026-05-08 20:58:21,612 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.615 (阈值: 0.7)
+2026-05-08 20:58:38,257 [DEBUG] llm_gateway: LLM调用: input=1014 output=438
+2026-05-08 20:58:38,260 [INFO] intent_generator: [马克] 意图生成 → invite | emotion=warm | urgency=0.60
+2026-05-08 20:58:43,307 [DEBUG] llm_gateway: LLM调用: input=732 output=141
+2026-05-08 20:58:43,307 [INFO] dialogue_generator: [马克] → [艾琳]: 这周六下午怎么样？我可以带你参观整个空间，边走边聊，结束之后还能一起去喝杯咖啡继续深入交流！...
+2026-05-08 20:58:43,308 [INFO] dialogue_engine: [马克]: 这周六下午怎么样？我可以带你参观整个空间，边走边聊，结束之后还能一起去喝杯咖啡继续深入交流！ | 意图: invite | 关系变化: +0.040
+2026-05-08 20:58:43,308 [DEBUG] dialogue_engine: [回合 11] 发言者: 艾琳
+2026-05-08 20:59:01,021 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.633 (阈值: 0.7)
+2026-05-08 20:59:17,259 [DEBUG] llm_gateway: LLM调用: input=855 output=441
+2026-05-08 20:59:17,262 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=warm | urgency=0.30
+2026-05-08 20:59:26,259 [DEBUG] llm_gateway: LLM调用: input=608 output=183
+2026-05-08 20:59:26,262 [INFO] dialogue_generator: [艾琳] → [马克]: 这周六下午没问题！我已经迫不及待想看成品了，边逛边聊还能喝咖啡，那就这么说定了呀。...
+2026-05-08 20:59:26,262 [INFO] dialogue_engine: [艾琳]: 这周六下午没问题！我已经迫不及待想看成品了，边逛边聊还能喝咖啡，那就这么说定了呀。 | 意图: share | 关系变化: +0.050
+2026-05-08 20:59:26,263 [DEBUG] dialogue_engine: [回合 12] 发言者: 马克
+2026-05-08 20:59:48,459 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.683 (阈值: 0.7)
+2026-05-08 20:59:59,940 [DEBUG] llm_gateway: LLM调用: input=1055 output=415
+2026-05-08 20:59:59,944 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.50
+2026-05-08 21:00:05,241 [DEBUG] llm_gateway: LLM调用: input=737 output=117
+2026-05-08 21:00:05,241 [INFO] dialogue_generator: [马克] → [艾琳]: 其实说起来最有趣的挑战是，工厂里有一面特别大的老砖墙，老板一开始坚持要拆掉，但我硬是说服他们把整面墙...
+2026-05-08 21:00:05,241 [INFO] dialogue_engine: [马克]: 其实说起来最有趣的挑战是，工厂里有一面特别大的老砖墙，老板一开始坚持要拆掉，但我硬是说服他们把整面墙融入了设计——现在成 | 意图: share | 关系变化: +0.050
+2026-05-08 21:00:05,242 [DEBUG] dialogue_engine: [回合 13] 发言者: 艾琳
+2026-05-08 21:00:24,288 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.672 (阈值: 0.7)
+2026-05-08 21:00:45,485 [DEBUG] llm_gateway: LLM调用: input=925 output=431
+2026-05-08 21:00:45,491 [INFO] intent_generator: [艾琳] 意图生成 → ask | emotion=curious | urgency=0.40
+2026-05-08 21:00:54,313 [DEBUG] llm_gateway: LLM调用: input=614 output=295
+2026-05-08 21:00:54,317 [INFO] dialogue_generator: [艾琳] → [马克]: 说起来，Max当时是怎么说服老板把那块砖墙保留下来的呀？我特别好奇他具体用了什么理由，毕竟改造的时候...
+2026-05-08 21:00:54,318 [INFO] dialogue_engine: [艾琳]: 说起来，Max当时是怎么说服老板把那块砖墙保留下来的呀？我特别好奇他具体用了什么理由，毕竟改造的时候一般都会优先考虑拆掉 | 意图: ask | 关系变化: +0.020
+2026-05-08 21:00:54,319 [DEBUG] dialogue_engine: [回合 14] 发言者: 马克
+2026-05-08 21:14:32,650 [INFO] llm_gateway: LLM Gateway 初始化完成，模型: MiniMax-M2.7，API地址: https://api.minimaxi.com/anthropic
+2026-05-08 21:14:32,668 [INFO] dialogue_engine: [对话引擎启动] 艾琳 ↔ 马克 | 最大轮次: 20
+2026-05-08 21:14:37,134 [DEBUG] llm_gateway: LLM调用: input=307 output=75
+2026-05-08 21:14:37,134 [INFO] dialogue_generator: [艾琳] → [马克]: 嗨，马克！好久不见，最近怎么样？...
+2026-05-08 21:14:37,134 [INFO] dialogue_engine: [开场] 艾琳: 嗨，马克！好久不见，最近怎么样？
+2026-05-08 21:14:37,135 [DEBUG] dialogue_engine: [回合 2] 发言者: 马克
+2026-05-08 21:14:45,642 [DEBUG] llm_gateway: LLM调用: input=491 output=375
+2026-05-08 21:14:45,643 [INFO] intent_generator: [马克] 意图生成 → greet | emotion=warm | urgency=0.30
+2026-05-08 21:14:49,853 [DEBUG] llm_gateway: LLM调用: input=427 output=138
+2026-05-08 21:14:49,853 [INFO] dialogue_generator: [马克] → [艾琳]: 嘿Elena！好久不见啊，真的想死你了！最近怎么样？有什么新鲜事想跟我分享吗？...
+2026-05-08 21:14:49,854 [INFO] dialogue_engine: [马克]: 嘿Elena！好久不见啊，真的想死你了！最近怎么样？有什么新鲜事想跟我分享吗？ | 意图: greet | 关系变化: +0.020
+2026-05-08 21:14:49,854 [DEBUG] dialogue_engine: [回合 3] 发言者: 艾琳
+2026-05-08 21:14:58,323 [DEBUG] llm_gateway: LLM调用: input=517 output=297
+2026-05-08 21:14:58,323 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=warm | urgency=0.40
+2026-05-08 21:15:01,593 [DEBUG] llm_gateway: LLM调用: input=367 output=128
+2026-05-08 21:15:01,594 [INFO] dialogue_generator: [艾琳] → [马克]: Max！好久不见真是太好了！我最近去了一家超特别的咖啡馆，他们的分子料理咖啡简直颠覆了我对咖啡的认知...
+2026-05-08 21:15:01,594 [INFO] dialogue_engine: [艾琳]: Max！好久不见真是太好了！我最近去了一家超特别的咖啡馆，他们的分子料理咖啡简直颠覆了我对咖啡的认知，你一定要去试试！ | 意图: share | 关系变化: +0.050
+2026-05-08 21:15:01,594 [DEBUG] dialogue_engine: [回合 4] 发言者: 马克
+2026-05-08 21:15:17,796 [DEBUG] llm_gateway: LLM调用: input=619 output=429
+2026-05-08 21:15:17,796 [INFO] intent_generator: [马克] 意图生成 → ask | emotion=curious | urgency=0.50
+2026-05-08 21:15:24,386 [DEBUG] llm_gateway: LLM调用: input=451 output=280
+2026-05-08 21:15:24,387 [INFO] dialogue_generator: [马克] → [艾琳]: 听起来太有意思了！那家咖啡馆在哪里呀？有什么招牌饮品吗？体验到底怎么样，给我讲讲呗！...
+2026-05-08 21:15:24,387 [INFO] dialogue_engine: [马克]: 听起来太有意思了！那家咖啡馆在哪里呀？有什么招牌饮品吗？体验到底怎么样，给我讲讲呗！ | 意图: ask | 关系变化: +0.020
+2026-05-08 21:15:24,387 [DEBUG] dialogue_engine: [回合 5] 发言者: 艾琳
+2026-05-08 21:15:40,129 [DEBUG] llm_gateway: LLM调用: input=659 output=303
+2026-05-08 21:15:40,129 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=warm | urgency=0.50
+2026-05-08 21:15:52,442 [DEBUG] llm_gateway: LLM调用: input=445 output=218
+2026-05-08 21:15:52,443 [INFO] dialogue_generator: [艾琳] → [马克]: 就在老城区那边，名字叫"雾语"，招牌是那杯用液氮做的咖啡云，喝的时候云雾缭绕的，口感绵密得像在舌尖上...
+2026-05-08 21:15:52,443 [INFO] dialogue_engine: [艾琳]: 就在老城区那边，名字叫"雾语"，招牌是那杯用液氮做的咖啡云，喝的时候云雾缭绕的，口感绵密得像在舌尖上跳华尔兹，我喝完久久 | 意图: share | 关系变化: +0.050
+2026-05-08 21:15:52,443 [DEBUG] dialogue_engine: [回合 6] 发言者: 马克
+2026-05-08 21:16:03,678 [DEBUG] llm_gateway: LLM调用: input=324 output=397
+2026-05-08 21:16:03,679 [INFO] intent_generator: [马克] 意图生成 → share | emotion=curious | urgency=0.75
+2026-05-08 21:16:13,035 [DEBUG] llm_gateway: LLM调用: input=504 output=216
+2026-05-08 21:16:13,036 [INFO] dialogue_generator: [马克] → [艾琳]: 哇，液氮咖啡云也太酷了吧！我超想亲眼看看那烟雾缭绕的效果，肯定特别震撼。你下次去的时候能叫上我吗？...
+2026-05-08 21:16:13,036 [INFO] dialogue_engine: [马克]: 哇，液氮咖啡云也太酷了吧！我超想亲眼看看那烟雾缭绕的效果，肯定特别震撼。你下次去的时候能叫上我吗？ | 意图: share | 关系变化: +0.030
+2026-05-08 21:16:13,036 [DEBUG] dialogue_engine: [回合 7] 发言者: 艾琳
+2026-05-08 21:16:13,060 [WARNING] embedding_ollama: Ollama embed 失败: Error: unknown command "embed" for "ollama"
+
+2026-05-08 21:16:28,795 [DEBUG] llm_gateway: LLM调用: input=863 output=367
+2026-05-08 21:16:28,796 [INFO] intent_generator: [艾琳] 意图生成 → invite | emotion=warm | urgency=0.60
+2026-05-08 21:16:37,049 [DEBUG] llm_gateway: LLM调用: input=594 output=170
+2026-05-08 21:16:37,049 [INFO] dialogue_generator: [艾琳] → [马克]: 听起来太棒了！马克，我们一起去吧，我请客，就当是庆祝我们重逢！...
+2026-05-08 21:16:37,049 [INFO] dialogue_engine: [艾琳]: 听起来太棒了！马克，我们一起去吧，我请客，就当是庆祝我们重逢！ | 意图: invite | 关系变化: +0.040
+2026-05-08 21:16:37,049 [DEBUG] dialogue_engine: [回合 8] 发言者: 马克
+2026-05-08 21:16:37,078 [WARNING] embedding_ollama: Ollama embed 失败: Error: unknown command "embed" for "ollama"
+
+2026-05-08 21:16:51,192 [DEBUG] llm_gateway: LLM调用: input=894 output=296
+2026-05-08 21:16:51,192 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.70
+2026-05-08 21:17:02,722 [DEBUG] llm_gateway: LLM调用: input=586 output=433
+2026-05-08 21:17:02,722 [INFO] dialogue_generator: [马克] → [艾琳]: 那家咖啡馆听起来太棒了！Elena也刚邀请我去，正好可以一起去体验一下那神奇的液氮咖啡云效果！什么时...
+2026-05-08 21:17:02,723 [INFO] dialogue_engine: [马克]: 那家咖啡馆听起来太棒了！Elena也刚邀请我去，正好可以一起去体验一下那神奇的液氮咖啡云效果！什么时候去？我已经迫不及待 | 意图: share | 关系变化: +0.050
+2026-05-08 21:17:02,723 [DEBUG] dialogue_engine: [回合 9] 发言者: 艾琳
+2026-05-08 21:17:02,750 [WARNING] embedding_ollama: Ollama embed 失败: Error: unknown command "embed" for "ollama"
+
+2026-05-08 21:17:20,286 [DEBUG] llm_gateway: LLM调用: input=940 output=400
+2026-05-08 21:17:20,287 [INFO] intent_generator: [艾琳] 意图生成 → invite | emotion=warm | urgency=0.40
+2026-05-08 21:17:37,879 [DEBUG] llm_gateway: LLM调用: input=666 output=232
+2026-05-08 21:17:37,880 [INFO] dialogue_generator: [艾琳] → [马克]: 太好了！那这周六还是周日方便？我下午都有空。...
+2026-05-08 21:17:37,880 [INFO] dialogue_engine: [艾琳]: 太好了！那这周六还是周日方便？我下午都有空。 | 意图: invite | 关系变化: +0.040
+2026-05-08 21:17:37,880 [DEBUG] dialogue_engine: [回合 10] 发言者: 马克
+2026-05-08 21:17:37,909 [WARNING] embedding_ollama: Ollama embed 失败: Error: unknown command "embed" for "ollama"
+
+2026-05-08 21:18:01,559 [DEBUG] llm_gateway: LLM调用: input=971 output=328
+2026-05-08 21:18:01,562 [INFO] intent_generator: [马克] 意图生成 → share | emotion=curious | urgency=0.60
+2026-05-08 21:18:08,918 [DEBUG] llm_gateway: LLM调用: input=679 output=144
+2026-05-08 21:18:08,918 [INFO] dialogue_generator: [马克] → [艾琳]: 周六方便！整理房间可以改期，和Elena一起去探索液氮咖啡馆这种新鲜事怎么能错过呢，我已经超级期待亲...
+2026-05-08 21:18:08,918 [INFO] dialogue_engine: [马克]: 周六方便！整理房间可以改期，和Elena一起去探索液氮咖啡馆这种新鲜事怎么能错过呢，我已经超级期待亲眼看到那烟雾缭绕的效 | 意图: share | 关系变化: +0.030
+2026-05-08 21:18:08,918 [DEBUG] dialogue_engine: [回合 11] 发言者: 艾琳
+2026-05-08 21:18:08,941 [WARNING] embedding_ollama: Ollama embed 失败: Error: unknown command "embed" for "ollama"
+
+2026-05-08 21:18:16,750 [INFO] llm_gateway: LLM Gateway 初始化完成，模型: MiniMax-M2.7，API地址: https://api.minimaxi.com/anthropic
+2026-05-08 21:18:16,761 [INFO] dialogue_engine: [对话引擎启动] 艾琳 ↔ 马克 | 最大轮次: 20
+2026-05-08 21:18:20,777 [DEBUG] llm_gateway: LLM调用: input=307 output=53
+2026-05-08 21:18:20,778 [INFO] dialogue_generator: [艾琳] → [马克]: 马克，好久不见！最近过得怎么样？...
+2026-05-08 21:18:20,778 [INFO] dialogue_engine: [开场] 艾琳: 马克，好久不见！最近过得怎么样？
+2026-05-08 21:18:20,778 [DEBUG] dialogue_engine: [回合 2] 发言者: 马克
+2026-05-08 21:18:30,102 [DEBUG] llm_gateway: LLM调用: input=491 output=351
+2026-05-08 21:18:30,103 [INFO] intent_generator: [马克] 意图生成 → greet | emotion=warm | urgency=0.70
+2026-05-08 21:18:36,436 [DEBUG] llm_gateway: LLM调用: input=371 output=127
+2026-05-08 21:18:36,436 [INFO] dialogue_generator: [马克] → [艾琳]: 嘿 Elena！看到你真开心！最近我刚换了一份新工作，正在适应中，你怎么样？...
+2026-05-08 21:18:36,437 [INFO] dialogue_engine: [马克]: 嘿 Elena！看到你真开心！最近我刚换了一份新工作，正在适应中，你怎么样？ | 意图: greet | 关系变化: +0.020
+2026-05-08 21:18:36,437 [DEBUG] dialogue_engine: [回合 3] 发言者: 艾琳
+2026-05-08 21:18:53,211 [DEBUG] llm_gateway: LLM调用: input=517 output=384
+2026-05-08 21:18:53,212 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=warm | urgency=0.35
+2026-05-08 21:18:57,327 [DEBUG] llm_gateway: LLM调用: input=353 output=161
+2026-05-08 21:18:57,330 [INFO] dialogue_generator: [艾琳] → [马克]: 太棒了！恭喜你换了新工作呀。我最近也挺好的，刚完成了一个项目终于能喘口气。对了，新公司是做什么方向的...
+2026-05-08 21:18:57,330 [INFO] dialogue_engine: [艾琳]: 太棒了！恭喜你换了新工作呀。我最近也挺好的，刚完成了一个项目终于能喘口气。对了，新公司是做什么方向的？你感觉怎么样？ | 意图: share | 关系变化: +0.050
+2026-05-08 21:18:57,330 [DEBUG] dialogue_engine: [回合 4] 发言者: 马克
+2026-05-08 21:19:08,028 [DEBUG] llm_gateway: LLM调用: input=615 output=335
+2026-05-08 21:19:08,028 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.60
+2026-05-08 21:19:13,480 [DEBUG] llm_gateway: LLM调用: input=438 output=96
+2026-05-08 21:19:13,482 [INFO] dialogue_generator: [马克] → [艾琳]: 新公司主要做智能硬件，我最近负责产品运营这块，虽然还在熟悉阶段，但感觉每天都能学到新东西，挺有意思的...
+2026-05-08 21:19:13,483 [INFO] dialogue_engine: [马克]: 新公司主要做智能硬件，我最近负责产品运营这块，虽然还在熟悉阶段，但感觉每天都能学到新东西，挺有意思的！ | 意图: share | 关系变化: +0.050
+2026-05-08 21:19:13,483 [DEBUG] dialogue_engine: [回合 5] 发言者: 艾琳
+2026-05-08 21:19:29,026 [DEBUG] llm_gateway: LLM调用: input=668 output=386
+2026-05-08 21:19:29,027 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=curious | urgency=0.50
+2026-05-08 21:19:33,284 [DEBUG] llm_gateway: LLM调用: input=422 output=64
+2026-05-08 21:19:33,284 [INFO] dialogue_generator: [艾琳] → [马克]: 哇，智能硬件公司的产品运营听起来很有意思诶！平时运营策略主要偏线上还是线上线下结合？我之前也做过一段...
+2026-05-08 21:19:33,285 [INFO] dialogue_engine: [艾琳]: 哇，智能硬件公司的产品运营听起来很有意思诶！平时运营策略主要偏线上还是线上线下结合？我之前也做过一段时间产品运营，有机会 | 意图: share | 关系变化: +0.030
+2026-05-08 21:19:33,285 [DEBUG] dialogue_engine: [回合 6] 发言者: 马克
+2026-05-08 21:19:39,409 [DEBUG] llm_gateway: LLM调用: input=759 output=207
+2026-05-08 21:19:39,410 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.50
+2026-05-08 21:19:52,159 [DEBUG] llm_gateway: LLM调用: input=473 output=240
+2026-05-08 21:19:52,159 [INFO] dialogue_generator: [马克] → [艾琳]: 对了，我记得你之前也做过产品运营吧？我最近在整理用户生命周期管理的方案，正好想请教一下你有什么经验可...
+2026-05-08 21:19:52,159 [INFO] dialogue_engine: [马克]: 对了，我记得你之前也做过产品运营吧？我最近在整理用户生命周期管理的方案，正好想请教一下你有什么经验可以分享吗？ | 意图: share | 关系变化: +0.050
+2026-05-08 21:19:52,159 [DEBUG] dialogue_engine: [回合 7] 发言者: 艾琳
+2026-05-08 21:19:52,674 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.690 (阈值: 0.7)
+2026-05-08 21:20:02,976 [DEBUG] llm_gateway: LLM调用: input=827 output=327
+2026-05-08 21:20:02,976 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=warm | urgency=0.60
+2026-05-08 21:20:07,703 [DEBUG] llm_gateway: LLM调用: input=544 output=132
+2026-05-08 21:20:07,703 [INFO] dialogue_generator: [艾琳] → [马克]: 用户生命周期管理这块我之前正好做过不少案例，有什么具体想了解的尽管问，咱们正好可以好好聊聊~...
+2026-05-08 21:20:07,704 [INFO] dialogue_engine: [艾琳]: 用户生命周期管理这块我之前正好做过不少案例，有什么具体想了解的尽管问，咱们正好可以好好聊聊~ | 意图: share | 关系变化: +0.050
+2026-05-08 21:20:07,704 [DEBUG] dialogue_engine: [回合 8] 发言者: 马克
+2026-05-08 21:20:08,126 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.748 (阈值: 0.7)
+2026-05-08 21:20:08,126 [WARNING] dialogue_engine: [循环检测] 强制 change_topic
+2026-05-08 21:20:12,718 [DEBUG] llm_gateway: LLM调用: input=497 output=155
+2026-05-08 21:20:12,718 [INFO] dialogue_generator: [马克] → [艾琳]: 说起来，周末有什么安排吗？我刚发现了一家超棒的咖啡店，想找时间一起去坐坐。...
+2026-05-08 21:20:12,718 [INFO] dialogue_engine: [马克]: 说起来，周末有什么安排吗？我刚发现了一家超棒的咖啡店，想找时间一起去坐坐。 | 意图: change_topic | 关系变化: +0.000
+2026-05-08 21:20:12,719 [DEBUG] dialogue_engine: [回合 9] 发言者: 艾琳
+2026-05-08 21:20:13,157 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.691 (阈值: 0.7)
+2026-05-08 21:20:28,522 [DEBUG] llm_gateway: LLM调用: input=578 output=370
+2026-05-08 21:20:28,523 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=curious | urgency=0.70
+2026-05-08 21:20:46,407 [DEBUG] llm_gateway: LLM调用: input=636 output=382
+2026-05-08 21:20:46,408 [INFO] dialogue_generator: [艾琳] → [马克]: 听起来很棒！我平时挺喜欢去一些有个性的小众咖啡店，那种氛围感特别能让人放松。你推荐的这家有什么特色吗...
+2026-05-08 21:20:46,408 [INFO] dialogue_engine: [艾琳]: 听起来很棒！我平时挺喜欢去一些有个性的小众咖啡店，那种氛围感特别能让人放松。你推荐的这家有什么特色吗？ | 意图: share | 关系变化: +0.030
+2026-05-08 21:20:46,408 [DEBUG] dialogue_engine: [回合 10] 发言者: 马克
+2026-05-08 21:20:46,838 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.692 (阈值: 0.7)
+2026-05-08 21:20:56,175 [DEBUG] llm_gateway: LLM调用: input=932 output=328
+2026-05-08 21:20:56,175 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.60
+2026-05-08 21:21:00,965 [DEBUG] llm_gateway: LLM调用: input=643 output=151
+2026-05-08 21:21:00,965 [INFO] dialogue_generator: [马克] → [艾琳]: 这家咖啡店藏在老街区的二楼，露台能看到整条街的梧桐树，咖啡豆还是老板自己烘的，手冲特别香！而且周末下...
+2026-05-08 21:21:00,965 [INFO] dialogue_engine: [马克]: 这家咖啡店藏在老街区的二楼，露台能看到整条街的梧桐树，咖啡豆还是老板自己烘的，手冲特别香！而且周末下午有小型爵士乐演出， | 意图: share | 关系变化: +0.050
+2026-05-08 21:21:00,965 [DEBUG] dialogue_engine: [回合 11] 发言者: 艾琳
+2026-05-08 21:21:01,409 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.675 (阈值: 0.7)
+2026-05-08 21:21:15,258 [DEBUG] llm_gateway: LLM调用: input=989 output=442
+2026-05-08 21:21:15,258 [INFO] intent_generator: [艾琳] 意图生成 → invite | emotion=warm | urgency=0.65
+2026-05-08 21:21:19,951 [DEBUG] llm_gateway: LLM调用: input=726 output=150
+2026-05-08 21:21:19,952 [INFO] dialogue_generator: [艾琳] → [马克]: 哇，这家店简直是为我量身定制的！老街区、小众咖啡馆，还有露台景观和爵士乐演出，氛围感拉满。你真是太会...
+2026-05-08 21:21:19,952 [INFO] dialogue_engine: [艾琳]: 哇，这家店简直是为我量身定制的！老街区、小众咖啡馆，还有露台景观和爵士乐演出，氛围感拉满。你真是太会挑了！这周六下午你有 | 意图: invite | 关系变化: +0.040
+2026-05-08 21:21:19,952 [DEBUG] dialogue_engine: [回合 12] 发言者: 马克
+2026-05-08 21:21:20,400 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.703 (阈值: 0.7)
+2026-05-08 21:21:20,401 [WARNING] dialogue_engine: [循环检测] 强制 change_topic
+2026-05-08 21:21:25,170 [DEBUG] llm_gateway: LLM调用: input=604 output=118
+2026-05-08 21:21:25,171 [INFO] dialogue_generator: [马克] → [艾琳]: 对了，你最近有没有看什么好剧或者电影？我周末打算宅家刷片，但不知道看什么好，你有什么推荐吗？...
+2026-05-08 21:21:25,171 [INFO] dialogue_engine: [马克]: 对了，你最近有没有看什么好剧或者电影？我周末打算宅家刷片，但不知道看什么好，你有什么推荐吗？ | 意图: change_topic | 关系变化: +0.000
+2026-05-08 21:21:25,172 [DEBUG] dialogue_engine: [回合 13] 发言者: 艾琳
+2026-05-08 21:21:25,610 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.631 (阈值: 0.7)
+2026-05-08 21:21:45,085 [DEBUG] llm_gateway: LLM调用: input=1135 output=333
+2026-05-08 21:21:45,086 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=warm | urgency=0.50
+2026-05-08 21:21:50,813 [DEBUG] llm_gateway: LLM调用: input=730 output=153
+2026-05-08 21:21:50,814 [INFO] dialogue_generator: [艾琳] → [马克]: 对了，你周末要是想宅家刷片的话，我最近刚看完《黑镜》的新一季，有几集真的很有深度，看完会忍不住思考很...
+2026-05-08 21:21:50,814 [INFO] dialogue_engine: [艾琳]: 对了，你周末要是想宅家刷片的话，我最近刚看完《黑镜》的新一季，有几集真的很有深度，看完会忍不住思考很久，推荐你也去看看~ | 意图: share | 关系变化: +0.050
+2026-05-08 21:21:50,814 [DEBUG] dialogue_engine: [回合 14] 发言者: 马克
+2026-05-08 21:21:51,256 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.691 (阈值: 0.7)
+2026-05-08 21:22:05,410 [DEBUG] llm_gateway: LLM调用: input=1110 output=503
+2026-05-08 21:22:05,410 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.30
+2026-05-08 21:22:15,702 [DEBUG] llm_gateway: LLM调用: input=727 output=362
+2026-05-08 21:22:15,702 [INFO] dialogue_generator: [马克] → [艾琳]: 太好了！我一直想看这一季，你一说我就来劲了。对了，周末咖啡店那事我们定下来吧，到时候各自带一份最近的...
+2026-05-08 21:22:15,702 [INFO] dialogue_engine: [马克]: 太好了！我一直想看这一季，你一说我就来劲了。对了，周末咖啡店那事我们定下来吧，到时候各自带一份最近的心水片单，边喝手冲边 | 意图: share | 关系变化: +0.050
+2026-05-08 21:22:15,703 [DEBUG] dialogue_engine: [回合 15] 发言者: 艾琳
+2026-05-08 21:22:16,157 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.682 (阈值: 0.7)
+2026-05-08 21:22:36,904 [DEBUG] llm_gateway: LLM调用: input=1185 output=414
+2026-05-08 21:22:36,907 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=warm | urgency=0.30
+2026-05-08 21:22:51,591 [DEBUG] llm_gateway: LLM调用: input=738 output=234
+2026-05-08 21:22:51,591 [INFO] dialogue_generator: [艾琳] → [马克]: 我正好也刚刷完《黑镜》新一季，有几集看完后真的挺震撼的。你最期待哪几集？到时候可以一起聊聊~...
+2026-05-08 21:22:51,592 [INFO] dialogue_engine: [艾琳]: 我正好也刚刷完《黑镜》新一季，有几集看完后真的挺震撼的。你最期待哪几集？到时候可以一起聊聊~ | 意图: share | 关系变化: +0.050
+2026-05-08 21:22:51,592 [DEBUG] dialogue_engine: [回合 16] 发言者: 马克
+2026-05-08 21:22:52,051 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.672 (阈值: 0.7)
+2026-05-08 21:23:02,890 [DEBUG] llm_gateway: LLM调用: input=1172 output=405
+2026-05-08 21:23:02,891 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.60
+2026-05-08 21:23:07,430 [DEBUG] llm_gateway: LLM调用: input=717 output=206
+2026-05-08 21:23:07,431 [INFO] dialogue_generator: [马克] → [艾琳]: 那太好了！我最期待的还是第一集和最后一集，听说口碑特别好。周六下午两点老街二楼那家？到时候见！...
+2026-05-08 21:23:07,431 [INFO] dialogue_engine: [马克]: 那太好了！我最期待的还是第一集和最后一集，听说口碑特别好。周六下午两点老街二楼那家？到时候见！ | 意图: share | 关系变化: +0.050
+2026-05-08 21:23:07,431 [DEBUG] dialogue_engine: [回合 17] 发言者: 艾琳
+2026-05-08 21:23:07,883 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.649 (阈值: 0.7)
+2026-05-08 21:23:16,588 [DEBUG] llm_gateway: LLM调用: input=1165 output=470
+2026-05-08 21:23:16,589 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=warm | urgency=0.50
+2026-05-08 21:23:27,729 [DEBUG] llm_gateway: LLM调用: input=805 output=229
+2026-05-08 21:23:27,730 [INFO] dialogue_generator: [艾琳] → [马克]: 我觉得第三集最值得期待，那种关于记忆和身份的设定太有意思了，看完你会忍不住想自己到底是谁。还有第五集...
+2026-05-08 21:23:27,730 [INFO] dialogue_engine: [艾琳]: 我觉得第三集最值得期待，那种关于记忆和身份的设定太有意思了，看完你会忍不住想自己到底是谁。还有第五集的叙事方式很独特，看 | 意图: share | 关系变化: +0.050
+2026-05-08 21:23:27,730 [DEBUG] dialogue_engine: [回合 18] 发言者: 马克
+2026-05-08 21:23:28,192 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.702 (阈值: 0.7)
+2026-05-08 21:23:28,193 [WARNING] dialogue_engine: [循环检测] 强制 change_topic
+2026-05-08 21:23:32,409 [DEBUG] llm_gateway: LLM调用: input=648 output=139
+2026-05-08 21:23:32,409 [INFO] dialogue_generator: [马克] → [艾琳]: 对了，最近天气这么好，你有没有什么户外活动的计划？我看网上说附近有个新开的集市挺有意思的，要不要一起...
+2026-05-08 21:23:32,409 [INFO] dialogue_engine: [马克]: 对了，最近天气这么好，你有没有什么户外活动的计划？我看网上说附近有个新开的集市挺有意思的，要不要一起去逛逛？ | 意图: change_topic | 关系变化: +0.000
+2026-05-08 21:23:32,409 [DEBUG] dialogue_engine: [回合 19] 发言者: 艾琳
+2026-05-08 21:23:32,845 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.639 (阈值: 0.7)
+2026-05-08 21:23:49,058 [DEBUG] llm_gateway: LLM调用: input=1193 output=322
+2026-05-08 21:23:49,059 [INFO] intent_generator: [艾琳] 意图生成 → ask | emotion=curious | urgency=0.50
+2026-05-08 21:23:54,260 [DEBUG] llm_gateway: LLM调用: input=797 output=88
+2026-05-08 21:23:54,260 [INFO] dialogue_generator: [艾琳] → [马克]: 对了，你刚才说附近新开了一个集市？听起来挺有意思的，那个集市具体在哪儿？有什么特别的店铺或活动吗？我...
+2026-05-08 21:23:54,260 [INFO] dialogue_engine: [艾琳]: 对了，你刚才说附近新开了一个集市？听起来挺有意思的，那个集市具体在哪儿？有什么特别的店铺或活动吗？我挺想去逛逛的。 | 意图: ask | 关系变化: +0.020
+2026-05-08 21:23:54,260 [DEBUG] dialogue_engine: [回合 20] 发言者: 马克
+2026-05-08 21:23:54,719 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.673 (阈值: 0.7)
+2026-05-08 21:24:03,062 [DEBUG] llm_gateway: LLM调用: input=1139 output=277
+2026-05-08 21:24:03,062 [INFO] intent_generator: [马克] 意图生成 → share | emotion=warm | urgency=0.50
+2026-05-08 21:24:09,546 [DEBUG] llm_gateway: LLM调用: input=672 output=153
+2026-05-08 21:24:09,547 [INFO] dialogue_generator: [马克] → [艾琳]: 我记得那集市就在河边的创意园区那边，每周末才开，据说有好多手工摊位和小食，氛围特别棒。我之前看到照片...
+2026-05-08 21:24:09,547 [INFO] dialogue_engine: [马克]: 我记得那集市就在河边的创意园区那边，每周末才开，据说有好多手工摊位和小食，氛围特别棒。我之前看到照片就挺心动的，正好可以 | 意图: share | 关系变化: +0.050
+2026-05-08 21:24:09,548 [DEBUG] dialogue_engine: [回合 21] 发言者: 艾琳
+2026-05-08 21:24:10,007 [INFO] dialogue_engine: [循环检测] 最近5对相似度: 0.697 (阈值: 0.7)
+2026-05-08 21:24:21,592 [DEBUG] llm_gateway: LLM调用: input=1187 output=393
+2026-05-08 21:24:21,595 [INFO] intent_generator: [艾琳] 意图生成 → share | emotion=curious | urgency=0.40
+2026-05-08 21:24:34,128 [DEBUG] llm_gateway: LLM调用: input=768 output=175
+2026-05-08 21:24:34,128 [INFO] dialogue_generator: [艾琳] → [马克]: 河边创意园区听起来好棒啊！正好周六聊完《黑镜》我们可以一起去逛逛，我特别想看看那些手工摊位，感觉会很...
+2026-05-08 21:24:34,128 [INFO] dialogue_engine: [艾琳]: 河边创意园区听起来好棒啊！正好周六聊完《黑镜》我们可以一起去逛逛，我特别想看看那些手工摊位，感觉会很有趣。 | 意图: share | 关系变化: +0.030
+2026-05-08 21:24:34,128 [INFO] dialogue_engine: [对话引擎结束] 总轮次: 21
+2026-05-08 21:24:34,129 [INFO] llm_gateway: LLM Gateway 连接已关闭

@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_273_11",
+  "agent_id": "char_2",
+  "summary_text": "林晓华与张爷爷分享童年偷枣被抓的惊险趣事，感受爷爷“恨铁不成钢”的严厉背后满是爱意。对话中，林晓华期待见证“跳舞的分子”发光奇迹，两人手牵手共赏绚丽画面，林晓华被爷爷深沉的爱意深深打动，情感由好奇转为感动。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 273,
+  "core_memory": false
+}

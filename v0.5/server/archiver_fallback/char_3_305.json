@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_305_10",
+  "agent_id": "char_3",
+  "summary_text": "李延年深情告白，视媚娘为余生最暖的光与唯一的陪伴。他承诺无论晴雨寒暑，都将与她并肩共守深宫岁月，将漫长孤寂化作只属于两人的温柔与春暖花开。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 305,
+  "core_memory": false
+}

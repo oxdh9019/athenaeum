@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_270_10",
+  "agent_id": "char_1",
+  "summary_text": "陈建国与张叔约定未来共同进行化学实验，并承诺无论失败与否都会互相支持。同时，他向晓华传达陪伴与鼓励，强调符号如老友般温暖，消除对方顾虑，展现深厚信任与情感联结。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 270,
+  "core_memory": false
+}

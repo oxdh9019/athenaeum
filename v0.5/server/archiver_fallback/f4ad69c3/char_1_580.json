@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_580_10",
+  "agent_id": "char_1",
+  "summary_text": "陈阿海与思雨约定在码头边吃鲜货、边唠嗑，认为大家吃饱喝足日子才红火。陈阿海强调渔民最踏实的丰收是海味新鲜，并承诺明早五点带大伙儿出海抓大鲜鱼，传递出温暖坚定的情感。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 580,
+  "core_memory": false
+}

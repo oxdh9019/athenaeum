@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_725_10",
+  "agent_id": "char_3",
+  "summary_text": "赵大山与陈阿海、思雨讨论海货行情上涨及潜在囤货阴谋，计划前往塔顶共饮热茶，并计划前往码头探查老张的动向，情感由闲聊转为对行业变动的担忧与期待。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "curious",
+  "importance_score": 0.85,
+  "tick_created": 725,
+  "core_memory": false
+}

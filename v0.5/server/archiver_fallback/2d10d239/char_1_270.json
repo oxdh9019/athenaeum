@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_270_10",
+  "agent_id": "char_1",
+  "summary_text": "陈建国与卫哥（晓华）在夜色中深情对话，承诺共同度过漫长青春。陈建国承诺演示化学实验并拍摄美照，两人约定无论多晚都安心陪伴，将日常过成诗，情感温暖而坚定。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 270,
+  "core_memory": false
+}

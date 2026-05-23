@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_1150_10",
+  "agent_id": "char_3",
+  "summary_text": "张卫国与老陈、晓华、建国在茶香中畅谈青春、岁月与交情，从哲理探讨到人生感悟，情感由热烈转为宁静温暖，约定继续共话旧时光与未来故事。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 1150,
+  "core_memory": false
+}

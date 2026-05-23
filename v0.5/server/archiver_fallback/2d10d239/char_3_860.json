@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_860_12",
+  "agent_id": "char_3",
+  "summary_text": "张卫国与多位老友在秋日茶叙中重温往昔，借书中智慧与人间烟火慰藉心灵。对话从怀旧温情延伸至对人性世事的深刻共鸣，最终在茶香与秋光中达成安稳和谐的共识。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 860,
+  "core_memory": false
+}

@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_730_10",
+  "agent_id": "char_1",
+  "summary_text": "赵无伤与苏媚娘在寒夜灯下促膝长谈，从太学新经到宫墙传闻，再到游民下棋，二人以真心换真心，于世态炎凉中寻得温暖，情谊在静坐品茗中愈发深厚。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 730,
+  "core_memory": false
+}

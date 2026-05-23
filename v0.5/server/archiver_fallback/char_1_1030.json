@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_1030_10",
+  "agent_id": "char_1",
+  "summary_text": "赵无伤与苏媚娘、李延年共话朝堂暗流，担忧局势动荡危及他人。赵无伤虽感陪伴之暖，却因恐惧而决定独自刺探，承诺若有变数即刻告知二人。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "wary",
+  "importance_score": 0.9,
+  "tick_created": 1030,
+  "core_memory": false
+}

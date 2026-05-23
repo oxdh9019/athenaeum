@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_300_10",
+  "agent_id": "char_2",
+  "summary_text": "苏媚娘与李延年于深宫漫步，共品新茶、共读奇书。她以温情言语化解孤寂，将冷宫化作暖屋，二人约定风雨兼程亦要笑对人生，把日子过成诗，共享片刻欢喜与余生温暖。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 300,
+  "core_memory": false
+}

@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_260_10",
+  "agent_id": "char_1",
+  "summary_text": "陈建国在春光中陪伴晓华观察荧光反应，将科学实验比作绚丽奇迹，以温柔牵引和深情陪伴，将平淡退休生活酿成陈年甜酒，传递温暖与安心。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 260,
+  "core_memory": false
+}

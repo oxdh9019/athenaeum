@@ -1,0 +1,100 @@
+# V0.7 Docker Compose - 完整服务编排
+version: '3.8'
+
+services:
+  # ==================== Ollama 本地模型服务 ====================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: athenaeum_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    # 健康检查：验证 Ollama API 可用
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # 模型预热（可选，需要提前准备好模型）
+    # 正式环境建议提前拉取模型，不要在容器启动时拉取
+    # entrypoint: ["/bin/bash", "/pull_models.sh"]
+
+  # ==================== Chroma 向量数据库 ====================
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: athenaeum_chroma
+    ports:
+      - "8001:8000"  # 映射到 8001，避免与后端 8000 冲突
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== 后端 API 服务 ====================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: athenaeum_backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      ollama:
+        condition: service_healthy
+      chroma:
+        condition: service_healthy
+    environment:
+      # Ollama 配置
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - USE_OLLAMA=1
+      # Chroma 配置
+      - CHROMA_BASE_URL=http://chroma:8000
+      # API Keys（生产环境应使用 secrets 或 env 文件）
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY:-}
+    volumes:
+      # 归档降级数据持久化
+      - ./archiver_fallback:/app/archiver_fallback
+      # Chroma 数据持久化
+      - chroma_data:/app/chroma_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ==================== 前端 Web 服务 ====================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: athenaeum_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# ==================== 数据卷 ====================
+volumes:
+  ollama_data:
+    driver: local
+  chroma_data:
+    driver: local
+
+# ==================== 网络 ====================
+networks:
+  default:
+    name: athenaeum_network
+    driver: bridge

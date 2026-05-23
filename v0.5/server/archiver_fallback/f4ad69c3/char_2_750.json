@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_750_10",
+  "agent_id": "char_2",
+  "summary_text": "林思雨与陈阿海（大山）在港口夕阳下闲聊，她发现三号泊位存在暗流异常，担忧影响今晚航运调度。两人约定前往码头观察，并计划边喝茶边讨论航道变数，寻求陈阿海的风浪直觉以调整航向。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "wary",
+  "importance_score": 0.85,
+  "tick_created": 750,
+  "core_memory": false
+}

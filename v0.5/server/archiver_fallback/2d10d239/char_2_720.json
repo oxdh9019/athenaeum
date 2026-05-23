@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_720_10",
+  "agent_id": "char_2",
+  "summary_text": "林晓华与陈建国学长在食堂偶遇，闲聊中文系趣事与读书心得。林晓华分享食堂阿姨用文言文点菜的趣事，并邀请学长讲述读史经历；双方约定未来共同体验食堂“实战”，交流中充满期待与好奇。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.85,
+  "tick_created": 720,
+  "core_memory": false
+}

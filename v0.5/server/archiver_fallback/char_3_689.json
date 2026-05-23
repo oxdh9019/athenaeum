@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_689_10",
+  "agent_id": "char_3",
+  "summary_text": "退休老教师张卫国与晓华（建国）重逢，通过回忆教学趣事、探讨科学奥秘及分享生活感悟，从轻松寒暄深入至精神共鸣，传递好奇与温暖。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 689,
+  "core_memory": false
+}

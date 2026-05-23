@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_280_10",
+  "agent_id": "char_2",
+  "summary_text": "林晓华与卫国约定泡茶叙旧，却因担心钠遇水引发意外而心生焦虑。她渴望在茶香中重温旧情，更依赖卫国的守护来消除恐惧，体现了从期待到担忧再到寻求保护的情感转变。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "wary",
+  "importance_score": 0.85,
+  "tick_created": 280,
+  "core_memory": false
+}

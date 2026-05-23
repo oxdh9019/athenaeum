@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_290_10",
+  "agent_id": "char_1",
+  "summary_text": "陈阿海与大山通过茶叙互诉衷肠，陈阿海反复强调老渔民经验胜过数据，劝大山平安为主。对话中情感由豪迈转为深切关怀，体现兄弟间对生命安全的珍视。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 290,
+  "core_memory": false
+}

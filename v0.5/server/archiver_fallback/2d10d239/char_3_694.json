@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_694_10",
+  "agent_id": "char_3",
+  "summary_text": "张卫国与老同学晓华重逢，共品新茶，回忆大学实验室趣事。两人感慨时光流逝，视历史如老友，读书沉淀心灵。那份纯真快乐与温暖至今相伴，让岁月顺遂。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 694,
+  "core_memory": false
+}

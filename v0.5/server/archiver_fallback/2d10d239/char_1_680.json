@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_680_10",
+  "agent_id": "char_1",
+  "summary_text": "陈建国与老同学重逢，分享食堂阿姨懂文言文等趣事，回忆实验室傻气快乐的时光。大家约定未来互当小白鼠与小老师，重温温暖情谊。",
+  "participants": [
+    "char_1"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 680,
+  "core_memory": false
+}

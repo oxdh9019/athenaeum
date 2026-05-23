@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_3_440_10",
+  "agent_id": "char_3",
+  "summary_text": "赵大山与阿海、思雨多次互动，从邀请聚餐到讨论海鲜销售数据波动及台风风险。对话中赵大山对数据感到困惑，对台风担忧货物安全，最终决定加固船只并继续销售。整体氛围轻松但夹杂焦虑。",
+  "participants": [
+    "char_3"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.8,
+  "tick_created": 440,
+  "core_memory": false
+}

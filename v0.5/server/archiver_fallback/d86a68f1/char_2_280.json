@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_280_11",
+  "agent_id": "char_2",
+  "summary_text": "林晓华与张卫国约定在图书馆共度时光，以茶香与化学史为伴。两人互道心意，强调无论茶凉心暖，都将并肩守护这份温暖，共赴余生漫漫的浪漫旅程。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 280,
+  "core_memory": false
+}

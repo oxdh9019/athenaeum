@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_286_11",
+  "agent_id": "char_2",
+  "summary_text": "林晓华向老张表达深厚友谊，担忧化学知识不足出错连累对方，反复恳求对方不要嫌弃自己笨手笨脚。老张给予温暖回应，强调细水长流的陪伴与信任，让林晓华感到踏实安心，共同珍惜这份温暖缘分。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 286,
+  "core_memory": false
+}

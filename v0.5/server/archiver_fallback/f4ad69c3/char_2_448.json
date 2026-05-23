@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_448_10",
+  "agent_id": "char_2",
+  "summary_text": "林思雨与陈工探讨港口调度，从数据预警到台风应对，强调团队协作与人员安全。面对算法误判与恶劣海况，双方达成共识：优先保障渔民安全，共同追求大丰收。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.85,
+  "tick_created": 448,
+  "core_memory": false
+}

@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_300_10",
+  "agent_id": "char_2",
+  "summary_text": "林思雨与陈工、赵大山探讨数据在渔港发展中的作用。她主张用数据佐证老经验，强调数据流可能揭示鱼群迁徙规律，以预警风险并保障船家安全，推动从经验到数据驱动的决策转变。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "curious",
+  "importance_score": 0.85,
+  "tick_created": 300,
+  "core_memory": false
+}

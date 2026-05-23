@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_1_390_10",
+  "agent_id": "char_1",
+  "summary_text": "陈建国热情邀请老友张卫国重逢，提议在老茶馆叙旧。他鼓励对方放下压力，分享化学实验经验，强调操作规范与耐心练习的重要性，并承诺随时提供帮助，展现了深厚的友谊与关怀。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.9,
+  "tick_created": 390,
+  "core_memory": false
+}

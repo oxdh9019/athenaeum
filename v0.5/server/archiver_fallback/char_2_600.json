@@ -1,0 +1,12 @@
+{
+  "memory_id": "mem_char_2_600_10",
+  "agent_id": "char_2",
+  "summary_text": "苏媚娘深情表白，视李延年为此生安稳归宿，愿携手将苦熬成甜。她视与延年的同行为最大福气，承诺风雨中互依互暖，共度余生烟火。",
+  "participants": [
+    "char_2"
+  ],
+  "emotion": "warm",
+  "importance_score": 0.95,
+  "tick_created": 600,
+  "core_memory": false
+}

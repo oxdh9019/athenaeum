@@ -38,6 +38,7 @@ class DailyPlanner:
         self._agent_id = agent_id
         self._routine: list[RoutineEntry] = []
         self._current_period = "morning"
+        self._last_generated_period = "morning"  # V0.7: 上次生成日程的时段
 
     @property
     def agent_id(self) -> str:
@@ -278,3 +279,49 @@ class DailyPlanner:
     def sync_hour(self, game_hour: int):
         """同步游戏时间"""
         self._current_period = self._get_period_for_hour(game_hour)
+
+    def refresh_if_needed(
+        self,
+        game_hour: int,
+        personality: dict,
+        occupation: str = None,
+        active_goal: str = None,
+        goal_type: str = None,
+        force: bool = False
+    ) -> bool:
+        """
+        V0.7: 检查是否需要刷新日程（在新的一天开始时）
+
+        检测逻辑：如果当前是 morning 且上次生成不是 morning，说明跨了一天
+
+        Returns:
+            True = 已刷新日程，False = 无需刷新
+        """
+        current_period = self._get_period_for_hour(game_hour)
+
+        # 检测日期变化：如果当前是 morning 且上次生成不是早上，说明跨了一天
+        if current_period == "morning" and self._last_generated_period != "morning":
+            self.generate_daily_routine(
+                personality=personality,
+                occupation=occupation,
+                active_goal=active_goal,
+                goal_type=goal_type,
+                game_hour=game_hour,
+            )
+            self._last_generated_period = "morning"
+            logger.info(f"[DailyPlanner] [{self._agent_id}] 日程已刷新（新的一天开始）")
+            return True
+
+        if force:
+            self.generate_daily_routine(
+                personality=personality,
+                occupation=occupation,
+                active_goal=active_goal,
+                goal_type=goal_type,
+                game_hour=game_hour,
+            )
+            self._last_generated_period = current_period
+            logger.info(f"[DailyPlanner] [{self._agent_id}] 日程已强制刷新")
+            return True
+
+        return False

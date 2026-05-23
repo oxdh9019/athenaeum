@@ -96,6 +96,10 @@ class V07Agent:
         soul_config = SoulConfig.from_dict(soul) if soul else SoulConfig()
         self._subconscious_engine = SubconsciousEngine(agent_id, soul_config)
 
+        # V0.7: 目标管理器关联组件
+        self._goal_manager.set_emotion_model(self._emotion_model)
+        self._goal_manager.set_dialogue_callback(self._on_goal_share)
+
     def _sync_daily_plan(self):
         """同步日程计划"""
         active_goal = self._goal_manager.active_goal
@@ -231,8 +235,24 @@ class V07Agent:
     async def try_archive(self, current_tick: int, force: bool = False) -> None:
         if self._archiver and self._dialogue_buffer:
             pending_count = len(self._dialogue_buffer)
-            if pending_count >= 10 or (force and pending_count > 0):
-                summary = await self._archiver.archive_if_needed(self._agent_id, current_tick, force)
+
+            # V0.7: 条件反思机制 - 计算 drama_score
+            drama_score = 0.0
+            if pending_count >= 5:
+                drama_score = self._archiver.evaluate_drama(
+                    self._agent_id,
+                    self._dialogue_buffer[-10:],
+                    [],  # relationship_changes
+                    [],  # narrative_events
+                )
+
+            # drama_score >= 0.3 或 pending >= 10 时触发归档
+            should_force = drama_score >= 0.3
+            if pending_count >= 10 or should_force or force:
+                summary = await self._archiver.archive_if_needed(
+                    self._agent_id, current_tick, force=(should_force or force)
+                )
+                logger.info(f"[{self._name}] 归档触发: drama_score={drama_score:.2f}, pending={pending_count}")
                 if summary:
                     if self._forgetting_curve:
                         from .forgetting_curve import MemoryEntry
@@ -357,6 +377,21 @@ class V07Agent:
         # V0.7: 情绪状态
         emotion_state = self._emotion_model.get_state()
 
+        # V0.7: 情绪行为引导
+        emotion_label = emotion_state.get('label', 'neutral')
+        if emotion_label == 'anxious':
+            emotion_behavior_guide = "你当前感到焦虑，倾向于谨慎行动，避免冒险"
+        elif emotion_label == 'happy':
+            emotion_behavior_guide = "你心情愉快，更愿意主动社交和尝试新事物"
+        elif emotion_label == 'sad':
+            emotion_behavior_guide = "你情绪低落，可能更倾向于独处和安静的活动"
+        elif emotion_label == 'content':
+            emotion_behavior_guide = "你感到满足，倾向于维持现状，保持平稳的行动节奏"
+        elif emotion_label == 'curious':
+            emotion_behavior_guide = "你充满好奇心，渴望探索新事物"
+        else:
+            emotion_behavior_guide = "你目前情绪平稳，行动理性"
+
         # V0.7: 行动风格
         action_style = self._personality_filter.get_action_style()
 
@@ -386,7 +421,8 @@ class V07Agent:
 
 当前日程: {activity_desc}
 
-情绪状态: {emotion_state.get('label', 'neutral')} (效价={emotion_state.get('valence', 0):.2f}, 唤醒={emotion_state.get('arousal', 0):.2f})
+情绪状态: {emotion_label} (效价={emotion_state.get('valence', 0):.2f}, 唤醒={emotion_state.get('arousal', 0):.2f})
+行为引导: {emotion_behavior_guide}
 
 行动风格: {action_style.get('style_description', '行为稳定')}
 
@@ -451,6 +487,14 @@ class V07Agent:
                 # V0.7: 同步游戏时间到日程
                 if hasattr(self._world, '_game_hour'):
                     self._daily_planner.sync_hour(self._world._game_hour)
+                    # V0.7: 检查是否需要刷新日程（跨天检测）
+                    self._daily_planner.refresh_if_needed(
+                        game_hour=self._world._game_hour,
+                        personality=self._personality,
+                        occupation=self._occupation,
+                        active_goal=self._goal_manager.active_goal.description if self._goal_manager.active_goal else None,
+                        goal_type=self._goal_manager.active_goal.goal_type.value if self._goal_manager.active_goal else None,
+                    )
 
                 # V0.7: 检查目标截止压力
                 if self._heartbeat_mode.check_goal_deadline_pressure(
@@ -476,6 +520,14 @@ class V07Agent:
                 await self._task
             except asyncio.CancelledError:
                 pass
+
+    # ==================== V0.7 目标完成回调 ====================
+
+    def _on_goal_share(self, message: str):
+        """V0.7: 目标完成分享回调 - 将消息加入对话队列"""
+        # 如果角色当前在对话中，可以选择分享目标进展
+        logger.info(f"[{self._name}] 目标完成分享: {message}")
+        self.add_memory("self", f"我刚刚完成了目标：{message}")
 
     # ==================== V0.7 外部接口 ====================
 

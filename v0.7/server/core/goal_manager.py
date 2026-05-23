@@ -59,6 +59,8 @@ class GoalManager:
         self._goals: list[Goal] = []
         self._active_goal: Optional[Goal] = None
         self._tick_count = 0
+        self._emotion_model = None  # V0.7: 情绪模型引用
+        self._dialogue_callback = None  # V0.7: 目标完成分享回调
 
     @property
     def agent_id(self) -> str:
@@ -301,10 +303,24 @@ class GoalManager:
 
         1. 标记完成
         2. 降低相关需求
-        3. 激活下一个目标
+        3. 情绪正向波动
+        4. 分享行为（若存在对话回调）
+        5. 激活下一个目标
         """
         goal.complete()
         logger.info(f"[GoalManager] [{self._agent_id}] 目标完成: {goal.description}")
+
+        # 情绪正向波动
+        if self._emotion_model:
+            self._emotion_model.adjust_valence(0.1)
+            logger.info(f"[GoalManager] [{self._agent_id}] 情绪正向调整 +0.1")
+
+        # 分享行为
+        if self._dialogue_callback:
+            try:
+                self._dialogue_callback(f"我刚完成了目标：{goal.description}")
+            except Exception as e:
+                logger.warning(f"[GoalManager] [{self._agent_id}] 分享回调失败: {e}")
 
         # 如果完成的是当前活跃目标，激活下一个
         if self._active_goal and self._active_goal.goal_id == goal.goal_id:
@@ -350,3 +366,11 @@ class GoalManager:
         # 保留最近3个已完成目标用于记忆
         for goal in completed[3:]:
             self._goals.remove(goal)
+
+    def set_emotion_model(self, emotion_model):
+        """V0.7: 设置情绪模型引用"""
+        self._emotion_model = emotion_model
+
+    def set_dialogue_callback(self, callback):
+        """V0.7: 设置目标完成分享回调"""
+        self._dialogue_callback = callback

@@ -232,15 +232,15 @@ class Worldsmith:
         original_len = len(text)
         logger.info(f"[Worldsmith] _extract_json 输入长度: {original_len}")
 
-        # 步骤1: 清理 [THINK]...[/THINK] 块（精确匹配，不跨代码块）
+        # 步骤1: 清理 [THINK]...[/THINK] 块
         text = re.sub(r'\[THINK\].*?\[/THINK\]', '', text, flags=re.DOTALL | re.IGNORECASE)
 
-        # 步骤2: 移除 markdown 代码块 ```json ... ``` 和 ``` ... ```
+        # 步骤2: 清理 [SPEAK]...[/SPEAK] 块（移除整个块，JSON应在块外）
+        text = re.sub(r'\[SPEAK\].*?\[/SPEAK\]', '', text, flags=re.DOTALL | re.IGNORECASE)
+
+        # 步骤3: 移除 markdown 代码块 ```json ... ``` 和 ``` ... ```
         text = re.sub(r'```json\s*', '', text)
         text = re.sub(r'```\s*', '', text)
-
-        # 步骤3: 移除 [SPEAK] 和 [/SPEAK] 标签（但保留标签内的 JSON 内容）
-        text = re.sub(r'\[/?SPEAK\]', '', text, flags=re.IGNORECASE)
 
         # 步骤4: 跳过前导空白和换行
         text = text.lstrip('\n\r\t ')

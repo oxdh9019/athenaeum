@@ -135,7 +135,6 @@ class CharacterConfig(BaseModel):
     @classmethod
     def fix_pronouns(cls, v):
         if isinstance(v, list):
-            # Convert ['he', 'him', 'his'] to '他/他/他' or similar
             if len(v) >= 3:
                 return f"{v[0]}/{v[1]}/{v[2]}"
             elif len(v) == 2:
@@ -147,6 +146,74 @@ class CharacterConfig(BaseModel):
         if isinstance(v, str):
             return v
         return "他/她/它"
+
+    @field_validator('needs', mode='before')
+    @classmethod
+    def fix_needs(cls, v):
+        if v is None:
+            return []
+        if isinstance(v, list):
+            if not v:
+                return []
+            # 处理字符串列表 ["belonging", "safety"]
+            if v and isinstance(v[0], str):
+                return [{"name": n, "level": 0.5} for n in v]
+            # 已经是 NeedItem 格式
+            return v
+        if isinstance(v, dict):
+            # 处理 {"belonging": 0.6, "safety": 0.8} 格式
+            return [{"name": k, "level": float(v)} for k, v in v.items()]
+        return []
+
+    @field_validator('identity_tags', mode='before')
+    @classmethod
+    def fix_identity_tags(cls, v):
+        if isinstance(v, dict):
+            # 确保 secondary 是列表
+            if 'secondary' in v and isinstance(v['secondary'], str):
+                v['secondary'] = [v['secondary']]
+            return v
+        if isinstance(v, str):
+            # LLM 返回字符串而不是对象
+            return {"primary": v, "secondary": [], "self_identity": ""}
+        # 返回默认值
+        return {"primary": "", "secondary": [], "self_identity": ""}
+
+    @field_validator('appearance', mode='before')
+    @classmethod
+    def fix_appearance(cls, v):
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, str):
+            # LLM 返回字符串描述而不是对象
+            return {"height": "", "build": "", "hair": "", "eyes": "", "face": v, "distinguishing_features": []}
+        return {}
+
+    @field_validator('social_background', mode='before')
+    @classmethod
+    def fix_social_background(cls, v):
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, str):
+            # LLM 返回字符串而不是对象
+            return {"family": {}, "education": {}, "career": {}, "social_network": {}}
+        return {}
+
+    @field_validator('backstory', mode='before')
+    @classmethod
+    def fix_backstory(cls, v):
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, str):
+            return {"title": "", "childhood": "", "adolescence": "", "adulthood": "", "present": v, "turning_points": []}
+        return {}
+
+    @field_validator('personality', mode='before')
+    @classmethod
+    def fix_personality(cls, v):
+        if isinstance(v, dict):
+            return v
+        return {}
 
 
 class CharacterPairRelationship(BaseModel):

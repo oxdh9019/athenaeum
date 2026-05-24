@@ -30,23 +30,38 @@ Athenaeum 是一个AI角色社交模拟平台，多个具有独立个性的AI角
 ## 快速开始
 
 ```bash
-# 查看各版本实现
-cd v0.X
+# 运行 v0.7 服务器
+cd v0.7/server
+python server.py
 
-# 运行测试 (v0.7)
-python tests/test_v07_soul_system.py
+# 访问 http://localhost:8000
 ```
 
 ## V0.7 灵魂增强版
 
-核心新增功能：
-
+核心功能：
 - **Soul 层**：InnerConflict（内在矛盾）、SubconsciousRule（潜意识规则）
 - **SubconsciousEngine**：零 LLM 成本的 micro_action 生成
 - **条件反思机制**：drama_score 评估，仅高戏剧性对话触发归档
 - **StoryMode**：有限 Tick 故事运行，自动结束检测与摘要生成
+- **世界工坊**：自然语言生成世界+角色+关系+相性分析
+- **25 个自动化 e2e 测试**覆盖所有核心功能
 
-详见 [v0.7/README.md](v0.7/README.md)
+### V0.7 修复记录 (2024-05-24)
+
+- ✅ 修复 `[THINK]/[SPEAK]` 标签导致的 JSON 解析失败
+- ✅ 修复 `needs`、`identity_tags`、`appearance`、`social_background` 字段格式兼容性
+- ✅ 修复 Tab 切换崩溃问题（`saveToStorage` 变量顺序错误）
+- ✅ 修复工坊导入功能状态恢复
+- ✅ 添加已生成世界列表（localStorage 持久化）
+- ✅ 导出/导入/应用到引擎按钮默认可见
+
+### 技术栈
+
+- **前端**：React + TypeScript + Vite
+- **后端**：FastAPI + Python 3.14
+- **LLM**：Ollama (qwen3.5:4b) / MiniMax-M2.7
+- **测试**：Playwright e2e
 
 ## 文档
 

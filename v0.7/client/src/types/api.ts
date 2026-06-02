@@ -108,7 +108,7 @@ export const DialogueEntrySchema = z
     from_id: z.string(),
     to: z.string(),
     utterance: z.string(),
-    micro_action: z.string().optional(),
+    micro_action: z.string().nullable().optional(),
     tick: z.number().int().nonnegative(),
   })
   .passthrough()
@@ -147,6 +147,9 @@ export const WorldStateSchema = z
     locations: z.array(LocationSchema).default([]),
     recent_dialogues: z.array(DialogueEntrySchema).default([]),
     recent_actions: z.array(ActionEntrySchema).default([]),
+    engine_running: z.boolean().optional().default(false),
+    applied: z.boolean().optional().default(false),
+    session_id: z.string().optional(),
   })
   .passthrough()
 

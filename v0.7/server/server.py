@@ -731,11 +731,40 @@ async def get_world_state():
                     "location": "unknown",
                 })
 
-    recent_dialogues = []
+    # P0 修复: 合并"已结束的对话"和"当前 session 还在跑的对话",让前端对话页
+    # 持续看到内容。Step 1 修好 dialogue trigger 之后,这里会有真实数据。
+    # - world._recent_dialogues: 已结束的对话(最近 50 条)
+    # - dialogue_mgr._sessions: 进行中的对话(0~1 个 session)
+    seen_utts: set[tuple[str, str, str]] = set()
+    merged: list = []
+    if s.world is not None:
+        for d in list(getattr(s.world, '_recent_dialogues', []) or []):
+            key = (str(d.get("from_id", d.get("from", ""))),
+                   str(d.get("to", "")),
+                   str(d.get("utterance", "")))
+            if key in seen_utts:
+                continue
+            seen_utts.add(key)
+            merged.append(d)
     if s.dialogue_mgr and getattr(s.dialogue_mgr, '_sessions', None):
         for session in s.dialogue_mgr._sessions.values():
-            recent_dialogues.extend(getattr(session, 'conversation_log', [])[-20:])
-    recent_dialogues = recent_dialogues[-20:]
+            for d in getattr(session, 'conversation_log', []):
+                key = (str(getattr(d, 'from_agent', '')),
+                       str(getattr(d, 'to_agent', '')),
+                       str(getattr(d, 'utterance', '')))
+                if key in seen_utts:
+                    continue
+                seen_utts.add(key)
+                merged.append({
+                    "from": getattr(d, 'from_agent', ''),
+                    "from_id": getattr(d, 'from_agent', ''),
+                    "to": getattr(d, 'to_agent', ''),
+                    "utterance": getattr(d, 'utterance', ''),
+                    "micro_action": getattr(d, 'micro_action', None),
+                    "tick": getattr(d, 'tick', 0),
+                })
+    merged.sort(key=lambda d: d.get("tick", 0))
+    recent_dialogues = merged[-20:]
 
     return {
         "tick_id": getattr(s.world, '_tick_id', 0),
@@ -747,10 +776,12 @@ async def get_world_state():
         "tick_type": "normal",
         "agents": agents_data,
         "locations": s.world._serialize_locations() if hasattr(s.world, '_serialize_locations') else ([loc.name for loc in s.world.get_all_locations()] if hasattr(s.world, 'get_all_locations') else []),
-        "dialogues": [
-            {"from": d.from_agent, "to": d.to_agent, "utterance": d.utterance, "micro_action": getattr(d, 'micro_action', None), "tick": getattr(d, 'tick', 0)}
+        "recent_dialogues": [
+            {"from": d.get("from", d.get("from_id", "")), "from_id": d.get("from_id", d.get("from", "")), "to": d.get("to", ""), "utterance": d.get("utterance", ""), "micro_action": d.get("micro_action"), "tick": d.get("tick", 0)}
             for d in recent_dialogues
         ],
+        "engine_running": s.engine_running,
+        "applied": s.world is not None and bool(getattr(s.world, '_agents', None)),
         "session_id": getattr(s.world, '_world_session_id', None),
     }
 

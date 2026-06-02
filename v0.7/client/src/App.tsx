@@ -26,8 +26,6 @@ import {
   type DialogueEntry,
   type RouterStats,
 } from './types/api'
-import type { Memory } from './components/DiaryView'
-import type { TimelineEvent } from './components/TimelineView'
 import Dashboard from './views/Dashboard'
 import AgentsView from './views/AgentsView'
 import DialogueView from './views/DialogueView'
@@ -50,8 +48,6 @@ function AppContent() {
   const [possessAgent, setPossessAgent] = useState<Agent | null>(null)
   const [possessTurns, setPossessTurns] = useState<PossessTurn[]>([])
   const [possessPending, setPossessPending] = useState(false)
-  const [diaryMemories, setDiaryMemories] = useState<Memory[]>([])
-  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
   const dialogueScrollRef = useRef<HTMLDivElement>(null)
 
   // WS 驱动的实时状态推送；轮询仅作为 WS 断线时的兜底
@@ -219,12 +215,10 @@ function AppContent() {
             agents={agents}
             selectedAgent={selectedAgent?.id || ''}
             onSelectAgent={(id) => setSelectedAgent(agents.find(a => a.id === id) || null)}
-            memories={diaryMemories}
-            setMemories={setDiaryMemories}
           />
         )
       case 'timeline':
-        return <TimelineView events={timelineEvents} setEvents={setTimelineEvents} />
+        return <TimelineView />
       case 'map':
         return (
           <MapCanvas

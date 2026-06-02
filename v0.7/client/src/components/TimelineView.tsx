@@ -14,16 +14,12 @@ export interface TimelineEvent {
   timestamp?: string
 }
 
-interface TimelineViewProps {
-  events: TimelineEvent[]
-  setEvents: (e: TimelineEvent[]) => void
-}
-
-function TimelineView({ events, setEvents }: TimelineViewProps) {
+function TimelineView(_props: Record<string, never> = {}) {
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [filterType, setFilterType] = useState<string>('')
+  const [internalEvents, setInternalEvents] = useState<TimelineEvent[]>([])
   const pageSize = 20
 
   useEffect(() => {
@@ -39,7 +35,7 @@ function TimelineView({ events, setEvents }: TimelineViewProps) {
       }
       const resp = await fetch(url)
       const data = await resp.json()
-      setEvents(data.events || [])
+      setInternalEvents(data.events || [])
       setTotal(data.total || 0)
     } catch (e) {
       console.error('获取时间线失败:', e)
@@ -103,12 +99,12 @@ function TimelineView({ events, setEvents }: TimelineViewProps) {
             加载中...
           </div>
         )}
-        {!loading && events.length === 0 && (
+        {!loading && internalEvents.length === 0 && (
           <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px', fontSize: '14px' }}>
             暂无事件记录
           </div>
         )}
-        {!loading && events.map((event, idx) => (
+        {!loading && internalEvents.map((event, idx) => (
           <div
             key={event.id || idx}
             style={{

@@ -783,7 +783,17 @@ async def get_world_state():
         "engine_running": s.engine_running,
         "applied": s.world is not None and bool(getattr(s.world, '_agents', None)),
         "session_id": getattr(s.world, '_world_session_id', None),
-        "recent_actions": list(getattr(s.world, '_recent_actions', []) or [])[-20:],
+        "recent_actions": [
+            {
+                "tick": a.get("tick", 0),
+                "agent_id": a.get("agent_id", a.get("participants", [""])[0] if a.get("participants") else ""),
+                "agent_name": a.get("agent_name", ""),
+                "action_type": a.get("action_type", a.get("action", "unknown")[:32]),
+                "description": a.get("description", a.get("action", "")),
+                "target_location": a.get("target_location", None),
+            }
+            for a in list(getattr(s.world, '_recent_actions', []) or [])[-20:]
+        ],
     }
 
 

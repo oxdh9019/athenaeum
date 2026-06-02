@@ -20,14 +20,13 @@ interface DiaryViewProps {
   agents: Agent[]
   selectedAgent: string
   onSelectAgent: (id: string) => void
-  memories: Memory[]
-  setMemories: (m: Memory[]) => void
 }
 
-function DiaryView({ agents, selectedAgent, onSelectAgent, memories, setMemories }: DiaryViewProps) {
+function DiaryView({ agents, selectedAgent, onSelectAgent }: DiaryViewProps) {
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [internalMemories, setInternalMemories] = useState<Memory[]>([])
   const pageSize = 10
 
   useEffect(() => {
@@ -40,7 +39,7 @@ function DiaryView({ agents, selectedAgent, onSelectAgent, memories, setMemories
     try {
       const resp = await fetch(`/agent/${agentId}/journal?page=${pageNum}&size=${pageSize}`)
       const data = await resp.json()
-      setMemories(data.memories || [])
+      setInternalMemories(data.memories || [])
       setTotal(data.total || 0)
     } catch (e) {
       console.error('获取日记失败:', e)
@@ -108,12 +107,12 @@ function DiaryView({ agents, selectedAgent, onSelectAgent, memories, setMemories
             加载中...
           </div>
         )}
-        {selectedAgent && !loading && memories.length === 0 && (
+        {selectedAgent && !loading && internalMemories.length === 0 && (
           <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px', fontSize: '14px' }}>
             暂无记忆
           </div>
         )}
-        {memories.map((mem, idx) => (
+        {internalMemories.map((mem, idx) => (
           <div
             key={mem.memory_id || idx}
             style={{

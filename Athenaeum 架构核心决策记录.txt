@@ -119,6 +119,39 @@ ADR-006: 紧急成本控制与不可绕过权限
 影响：
 
 所有 LLM 接入必须走网关，成为必须遵守的约束。
+ADR-007: ADR-002 传输层暂缓实施，V0.7 使用进程内消息
+
+状态：补充说明（不取代 ADR-002）
+日期：2026-06-01（V0.7 审计驱动）
+背景：
+
+ADR-002 规定了 world.tick.* / agent.intent.* / agent.dialogue.* / system.event.* 四类主题，并明确"后期引入 NATS 只需更换传输层，消息格式不变"。
+V0.7 代码审计发现（`v0.7/server` 全文检索）：
+  - 零 NATS 依赖、零 `pynats`/`nats-py` 引用。
+  - `dialogue_engine.py:583-658` 用 `_subscribers: list` + `subscribe()` 实现了进程内 pub/sub（对话事件）。
+  - 其余模块间通信全部走直接函数调用（`world.tick()` → 各 agent.intent → `dialogue_mgr.trigger_dialogue()`）。
+  - 没有任何代码按 ADR-002 的 topic 格式（如 `world.tick.{tick_id}`）发布/订阅消息。
+决策：
+
+保留 ADR-002 的主题与消息体契约（这是对外/未来传输层的不变接口），但 V0.7 的传输层明确为"进程内"，具体实现：
+  - 对话事件：进程内 pub/sub（已存在于 `dialogue_engine.py`，无需新代码）。
+  - 世界 tick / agent intent：直接函数调用 + 类型化参数（Python 类型系统已做静态校验，无需额外 schema）。
+  - 不引入 NATS / Redis pub-sub / 任何跨进程消息中间件。
+触发重新评估的判据（满足任一即重新评估 ADR-007、可能实现 ADR-002 的传输层）：
+
+  - 需要把 WorldEngine 与 Agent 拆到独立进程（多机部署、worker 池化）。
+  - 出现第三个独立服务需要消费这些事件（如独立的观察者服务、长期记忆服务）。
+  - 进程内 pub/sub 的 `dialogue_engine._subscribers` 列表在测试或性能分析中成为瓶颈。
+理由：
+
+  - 单进程 FastAPI 部署下，NATS 的开销（序列化 + 网络栈 + 客户端重连）远超其收益。
+  - 现有代码在测试中已通过类型与行为验证；引入 NATS 反而需要重写全部 `_subscribers` 调用站点。
+  - ADR-002 的"消息格式不变"承诺意味着将来切换传输层时，调用方代码不需要改动（接口稳定，传输层可替换）。
+影响：
+
+  - V0.7 实现审计通过：零 NATS 依赖符合 ADR-007。
+  - 若未来实现 NATS，按本 ADR 判据触发，需新增 ADR-008 重新打开 ADR-002 的传输层决策。
+  - 现阶段不需要为"消息总线"添加任何代码。
 文档使用指引
 
 路线图用于排期和迭代目标设定。

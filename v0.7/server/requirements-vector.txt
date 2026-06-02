@@ -1,0 +1,4 @@
+# V0.7 可选依赖：向量记忆（Chroma）
+# 启用：pip install -r requirements.txt -r requirements-vector.txt
+# 禁用时：MemoryArchiver 会回退到 v0.7/server/archiver_fallback/ 磁盘存储
+chromadb>=0.4.0

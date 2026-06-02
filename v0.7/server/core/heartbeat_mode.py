@@ -15,9 +15,12 @@ logger = logging.getLogger(__name__)
 class HeartbeatConfig:
     """心跳模式配置"""
     enabled: bool = True
-    min_interval: int = 4   # 最小Tick间隔（V0.7: 默认 4 tick，配合 30s tick = 2 分钟/决策）
-    max_interval: int = 8   # 最大Tick间隔（V0.7: 默认 8 tick，配合 30s tick = 4 分钟/决策）
-    base_interval: int = 6  # 默认Tick间隔
+    # V0.7 Phase D A1: 心跳间隔放宽, 30s tick 配合下 = 4-8 分钟/决策 (base 6 min)
+    # 旧值 4-8 tick (2-4 min) 太频繁, LLM 还没"消化"上次决策就被叫醒,
+    # 导致 reasoning 同质化 + 角色行为缺乏深度
+    min_interval: int = 8
+    max_interval: int = 16
+    base_interval: int = 12  # ≈ 6 min/决策 (30s tick)
 
 
 class HeartbeatMode:

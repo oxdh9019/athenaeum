@@ -357,8 +357,14 @@ class V07Agent:
             response = await self._llm.chat(
                 messages=[{"role": "user", "content": prompt}],
                 system="你是一个行为决策助手。",
-                temperature=0.3,
-                max_tokens=150,
+                # V0.7 Phase D A1: temperature 0.3 → 0.55, 让推理更多样
+                # 0.3 太低, 同一状态反复产生同一行动 (无目标→四处走走)
+                # 0.55 是经验值: 既保持角色一致, 又允许探索新行为
+                temperature=0.55,
+                # V0.7 Phase D A1: max_tokens 150 → 250
+                # 150 把 reasoning 字段截断, LLM 偷懒, 决策描述很短
+                # 250 给 reasoning 留够空间, 角色"内心戏"更长更具体
+                max_tokens=250,
             )
             intent = self._parse_intent(response)
             if intent:
@@ -414,6 +420,8 @@ class V07Agent:
             emotion_label=emotion_label,
             emotion_state=emotion_state,
             action_style_desc=action_style.get('style_description', '行为稳定'),
+            # V0.7 Phase D A1: 注入上一轮决策, 让 LLM 反重复
+            last_action=self._state.get("last_decision"),
         )
 
     def _parse_intent(self, response: str) -> Optional[dict]:

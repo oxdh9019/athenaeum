@@ -65,6 +65,7 @@ _BEHAVIOR_PROMPT_TEMPLATE = """你是 {name}，目前在 {location}。
 行为引导: {emotion_guide}
 
 行动风格: {action_style}
+{last_action_section}
 
 请决定下一步行动。输出JSON格式：
 {{"action_type": "move|dialogue|wait|observe|idle", "target": "位置名或角色ID或null", "urgency": 0.5, "reasoning": "为什么想这样做"}}
@@ -87,6 +88,7 @@ def format_behavior_prompt(
     emotion_label: str,
     emotion_state: dict,
     action_style_desc: str,
+    last_action: Optional[dict] = None,
 ) -> str:
     memory_lines = [
         f"- {m.get('role', '?')}: {inject_guard(m.get("content", ""), max_length=MAX_MEMORY_CHARS, purpose="memory")}"
@@ -102,6 +104,24 @@ def format_behavior_prompt(
         max_length=MAX_NEIGHBOR_CHARS,
         purpose="neighbors",
     )
+
+    # V0.7 Phase D A1: 上次决策上下文 (反重复)
+    # 把 last_action 注入 prompt 头部, 让 LLM 看到"我刚才做了什么",
+    # 强制差异化决策, 解决"无目标时反复四处走走"的问题
+    last_action_section = ""
+    if last_action:
+        la_type = last_action.get("action_type", "wait")
+        la_target = last_action.get("target", "")
+        la_reasoning = inject_guard(
+            str(last_action.get("reasoning", "")),
+            max_length=200,
+            purpose="last_action_reasoning",
+        )
+        last_action_section = (
+            f"\n上一轮决策: action={la_type}, target={la_target}\n"
+            f"上一轮内心: {la_reasoning or '(无)'}\n"
+            f"提示: 避免重复同样的行动, 尝试新方向或深化当前状态"
+        )
 
     return _BEHAVIOR_PROMPT_TEMPLATE.format(
         name=name,
@@ -126,4 +146,5 @@ def format_behavior_prompt(
         arousal=f"{float(emotion_state.get('arousal', 0)):.2f}",
         emotion_guide=EMOTION_BEHAVIOR_GUIDE.get(emotion_label or "neutral", EMOTION_DEFAULT_GUIDE),
         action_style=action_style_desc or "行为稳定",
+        last_action_section=last_action_section,
     )

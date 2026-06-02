@@ -205,9 +205,17 @@ class StoryMode:
         self._status = StoryStatus.ENDING
         logger.info(f"[StoryMode] [{self._story_id}] 故事结束原因: {reason}")
 
-        # 异步生成摘要
-        asyncio.create_task(self._generate_summary())
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # 同步上下文调用（如 FastAPI def handler）没有运行中的 loop
+            # 退化为同步生成简单摘要，避免 coroutine never awaited 警告
+            logger.debug(f"[StoryMode] [{self._story_id}] 无运行中的 event loop，使用同步摘要")
+            self._summary = self._generate_simple_summary()
+            self._finish_end()
+            return True
 
+        loop.create_task(self._generate_summary())
         return True
 
     async def _generate_summary(self):

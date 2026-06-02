@@ -94,8 +94,12 @@ def register_llm_client(name: str):
 
     用法：
         @register_llm_client("local")
-        class LocalOllamaClient(ILLMClient):
+        class MyOllamaClient(ILLMClient):
             ...
+
+    注意：V0.7 默认实现见 `utils/ollama_client.py`（OllamaLLMClient）和
+    `utils/llm_client.py`（LLMClient），未实现 ILLMClient 接口，但被 server.py 直接
+    实例化。要让客户端走 ILLMClient 路径，请用本装饰器显式注册。
     """
     def deco(cls: Type[ILLMClient]):
         PluginRegistry.register_llm_client(name, cls)

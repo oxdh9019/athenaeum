@@ -292,14 +292,10 @@ class V05Agent:
 只输出JSON，不要其他内容。"""
 
     def _parse_action(self, response: str) -> Optional[dict]:
-        import json
-        import re
-        try:
-            match = re.search(r'\{[^}]+\}', response)
-            if match:
-                return json.loads(match.group())
-        except json.JSONDecodeError:
-            pass
+        from utils.llm_parsing import parse_llm_json
+        result = parse_llm_json(response)
+        if result is not None and "action" in result:
+            return result
         return {"action": "wait", "target": None}
 
     # ==================== 运行循环 ====================

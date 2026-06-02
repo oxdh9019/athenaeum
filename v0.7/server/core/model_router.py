@@ -4,6 +4,7 @@ model_router.py — V0.7 模型路由器
 """
 
 import logging
+from dataclasses import replace
 from datetime import datetime, date
 from typing import Optional
 
@@ -101,9 +102,9 @@ class ModelRouter(IModelRouter):
         return "local"
 
     def get_stats(self) -> RouterStats:
-        """返回路由统计，供仪表盘查询"""
+        """返回路由统计（防御性副本，防止调用方意外修改内部状态）"""
         self._check_daily_reset()
-        return self._stats
+        return replace(self._stats)
 
     def record_call(self, model: str, tokens: int, cost: float):
         """
@@ -116,10 +117,18 @@ class ModelRouter(IModelRouter):
         """
         self._check_daily_reset()
 
+        # 防御性归一化：未知 model 名称一律视为 local（不会错算到云端）
+        # 这避免上游误传 "qwen3.5:4b" 这种模型名字时被错误计入 cloud_calls
+        if model not in ("local", "cloud"):
+            logger.debug(f"[Router] 收到非标准 model 名称 {model!r}，归一化为 local")
+            model = "local"
+
         if model == "local":
             self._stats.local_calls += 1
         else:
             self._stats.cloud_calls += 1
+            # 防御：cost 不应为负
+            cost = max(0.0, float(cost))
             self._stats.total_cost += cost
 
         self._stats.budget_ratio = self._stats.total_cost / self._daily_budget
@@ -162,8 +171,8 @@ class ModelRouter(IModelRouter):
         model_key = self.route(intent_type, is_possessed, self._stats.budget_ratio)
 
         if model_key == "local":
-            return "LocalOllamaClient"
-        return "MiniMaxClient"
+            return "local"
+        return "cloud"
 
 
 def create_default_router() -> ModelRouter:

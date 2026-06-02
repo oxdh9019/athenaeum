@@ -13,6 +13,7 @@ from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import Optional
 from datetime import datetime
+from utils.llm_parsing import parse_llm_json
 
 logger = logging.getLogger(__name__)
 
@@ -279,12 +280,9 @@ class MemoryArchiver:
                 max_tokens=300,
             )
 
-            text = response.strip()
-            match = re.search(r'\{.*\}', text, re.DOTALL)
-            if match:
-                data = json.loads(match.group())
-            else:
-                data = json.loads(text)
+            data = parse_llm_json(response)
+            if data is None:
+                raise json.JSONDecodeError("无法解析 memory summary JSON", response, 0)
 
             participants = data.get("participants", [])
             if isinstance(participants, str):
@@ -335,11 +333,9 @@ class MemoryArchiver:
             )
 
             text = response.strip()
-            match = re.search(r'\{.*\}', text, re.DOTALL)
-            if match:
-                data = json.loads(match.group())
-            else:
-                data = json.loads(text)
+            data = parse_llm_json(text)
+            if data is None:
+                raise json.JSONDecodeError("无法解析 noise detection JSON", text, 0)
 
             if data.get("is_noise", False):
                 summary.importance_score = max(0.1, summary.importance_score * 0.5)
@@ -357,39 +353,19 @@ class MemoryArchiver:
 
         collection_name = f"{self._session_id}_{agent_id}_longterm"
 
-        try:
-            if collection_name not in self._archive_collections:
-                self._archive_collections[collection_name] = self._chroma.get_or_create_collection(
-                    name=collection_name,
-                    metadata={"agent_id": agent_id}
-                )
-
-            collection = self._archive_collections[collection_name]
-
+        # 必须持锁：collection 重建期间，如果 retriever 并发 query，
+        # 会拿到 None 然后 _generate_embedding 失败，整个 collection 记忆丢失。
+        async with self._lock:
             try:
-                collection.add(
-                    documents=[summary.summary_text],
-                    metadatas=[{
-                        "memory_id": summary.memory_id,
-                        "agent_id": summary.agent_id,
-                        "emotion": summary.emotion,
-                        "importance": summary.importance_score,
-                        "tick_created": summary.tick_created,
-                        "is_core": summary.core_memory,
-                        "participants": ",".join(summary.participants),
-                    }],
-                    ids=[summary.memory_id]
-                )
-            except Exception as add_error:
-                if "dimension" in str(add_error).lower() or "expected embedding" in str(add_error).lower():
-                    logger.warning(f"[Archiver] [{agent_id}] 集合维度不匹配，删除并重建")
-                    self._chroma.delete_collection(collection_name)
-                    del self._archive_collections[collection_name]
+                if collection_name not in self._archive_collections:
                     self._archive_collections[collection_name] = self._chroma.get_or_create_collection(
                         name=collection_name,
-                        metadata={"agent_id": agent_id, "embedding_dimensions": 1024}
+                        metadata={"agent_id": agent_id}
                     )
-                    collection = self._archive_collections[collection_name]
+
+                collection = self._archive_collections[collection_name]
+
+                try:
                     collection.add(
                         documents=[summary.summary_text],
                         metadatas=[{
@@ -403,15 +379,38 @@ class MemoryArchiver:
                         }],
                         ids=[summary.memory_id]
                     )
-                else:
-                    raise add_error
+                except Exception as add_error:
+                    if "dimension" in str(add_error).lower() or "expected embedding" in str(add_error).lower():
+                        logger.warning(f"[Archiver] [{agent_id}] 集合维度不匹配，删除并重建")
+                        self._chroma.delete_collection(collection_name)
+                        self._archive_collections.pop(collection_name, None)
+                        self._archive_collections[collection_name] = self._chroma.get_or_create_collection(
+                            name=collection_name,
+                            metadata={"agent_id": agent_id, "embedding_dimensions": 1024}
+                        )
+                        collection = self._archive_collections[collection_name]
+                        collection.add(
+                            documents=[summary.summary_text],
+                            metadatas=[{
+                                "memory_id": summary.memory_id,
+                                "agent_id": summary.agent_id,
+                                "emotion": summary.emotion,
+                                "importance": summary.importance_score,
+                                "tick_created": summary.tick_created,
+                                "is_core": summary.core_memory,
+                                "participants": ",".join(summary.participants),
+                            }],
+                            ids=[summary.memory_id]
+                        )
+                    else:
+                        raise add_error
 
-            logger.info(f"[Archiver] [{agent_id}] 记忆已存入 Chroma: {collection_name}/{summary.memory_id}")
-            return True
+                logger.info(f"[Archiver] [{agent_id}] 记忆已存入 Chroma: {collection_name}/{summary.memory_id}")
+                return True
 
-        except Exception as e:
-            logger.error(f"[Archiver] [{agent_id}] Chroma 存储失败: {e}")
-            return False
+            except Exception as e:
+                logger.error(f"[Archiver] [{agent_id}] Chroma 存储失败: {e}")
+                return False
 
     async def _store_in_json_fallback(self, agent_id: str, summary: MemorySummary) -> None:
         session_dir = self._fallback_dir / self._session_id
@@ -422,8 +421,26 @@ class MemoryArchiver:
             with open(fallback_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             logger.info(f"[Archiver] [{agent_id}] 记忆已降级存入 JSON: {fallback_path}")
+            # 清理该 agent 的旧 JSON 备份（每个 agent 最多保留 50 个）
+            await self._prune_json_fallback(session_dir, agent_id, keep=50)
         except Exception as e:
             logger.error(f"[Archiver] [{agent_id}] JSON 降级存储失败: {e}")
+
+    async def _prune_json_fallback(self, session_dir, agent_id: str, keep: int = 50) -> None:
+        """
+        每个 agent 在 session_dir 下最多保留 `keep` 个 JSON 备份。
+        多余的按文件名（tick）升序删除最早的。retriever 反正只读最新 N，
+        这里给个 cap 防止多周使用后磁盘涨满。
+        """
+        try:
+            files = sorted(session_dir.glob(f"{agent_id}_*.json"))
+            excess = len(files) - keep
+            if excess > 0:
+                for old in files[:excess]:
+                    old.unlink(missing_ok=True)
+                logger.info(f"[Archiver] [{agent_id}] 清理了 {excess} 个旧 JSON 备份")
+        except Exception as e:
+            logger.warning(f"[Archiver] [{agent_id}] JSON 备份清理失败: {e}")
 
     async def _sync_to_forgetting_curve(self, summary: MemorySummary):
         logger.info(f"[Archiver] [_sync_to_forgetting_curve] called: agent={summary.agent_id}, memory_id={summary.memory_id}")

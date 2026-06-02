@@ -1,6 +1,14 @@
 """
 llm_client.py — V0.3 LLM 客户端实现
 使用 anthropic SDK 调用 MiniMax-M2.7 模型
+
+【为什么是 anthropic SDK + MiniMax 域名？】
+历史背景：v0.3 时期 MiniMax 官方 SDK 不稳定且无 Python async 客户端，
+v0.3 选择"复用 anthropic 官方 SDK + 改 base_url"的方式接入 MiniMax 的
+Anthropic 兼容端点，base_url 默认值是 `https://api.minimaxi.com/anthropic`。
+这是 v0.3 的临时 hack，从 v0.4 起被 ADR-006 收编为标准做法：所有云端 LLM
+调用统一走 `LLMGateway`（位于 utils/llm_gateway.py），本类仅作底层 adapter。
+不要在业务代码中直接 new LLMClient()，请使用 `LLMGateway.choose()`。
 """
 
 import os
@@ -11,6 +19,17 @@ logger = logging.getLogger(__name__)
 
 PRICE_PER_1K_INPUT = 0.01
 PRICE_PER_1K_OUTPUT = 0.03
+
+# 简单脱敏：把异常的字符串里形如 `sk-xxx`、`sk-or-xxx`、`key=xxx`、`token=xxx`、
+# `apikey=xxx` 的子串替换为 `<redacted>`，避免错误回显泄露密钥。
+import re as _re
+_SECRET_RE = _re.compile(
+    r"(?i)(sk-[A-Za-z0-9_\-]{4,})|(api[_-]?key\s*[=:]\s*['\"]?[A-Za-z0-9_\-]{6,})|(token\s*[=:]\s*['\"]?[A-Za-z0-9_\-]{6,})"
+)
+
+
+def _redact_secrets(s: str) -> str:
+    return _SECRET_RE.sub("<redacted>", s)
 
 
 class LLMClient:
@@ -30,6 +49,19 @@ class LLMClient:
         self._first_fallback_warning = True
         self._cloud_available = None  # None=未检测, True=可用, False=不可用
         self._checked = False
+        self._router = None  # 可选：ModelRouter 实例（用于成本统计）
+
+    def set_router(self, router) -> None:
+        """注入 ModelRouter 用于成本统计。失败时静默忽略。"""
+        self._router = router
+
+    def _record_call(self, model: str, tokens: int, cost: float) -> None:
+        if self._router is None:
+            return
+        try:
+            self._router.record_call(model, tokens, cost)
+        except Exception as e:
+            logger.debug(f"[LLM] router.record_call 失败: {e}")
 
     async def health_check(self) -> bool:
         """启动时检测云端 LLM 是否可用"""
@@ -123,13 +155,18 @@ class LLMClient:
                 self._usage["total_output_tokens"] += u.output_tokens
                 cost = (u.input_tokens / 1000) * PRICE_PER_1K_INPUT + (u.output_tokens / 1000) * PRICE_PER_1K_OUTPUT
                 self._usage["total_cost"] += cost
+                self._record_call("cloud", u.input_tokens + u.output_tokens, cost)
+            else:
+                self._record_call("cloud", 0, 0.0)
 
             return result if result else text
 
         except Exception as e:
             # 云端失败，标记并回退到本地 Ollama
             if self._fallback_llm:
-                logger.warning(f"[LLM] 云端服务失败，切换到本地 Ollama: {e}")
+                # 防泄漏：异常信息可能含 base_url/api_key 头几位的回显，统一脱敏
+                safe_err = _redact_secrets(str(e))
+                logger.warning(f"[LLM] 云端服务失败，切换到本地 Ollama: {safe_err}")
                 self._cloud_available = False
                 try:
                     return await self._fallback_llm.chat(messages, system, temperature, max_tokens)

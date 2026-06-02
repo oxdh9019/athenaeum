@@ -614,6 +614,18 @@ class DialogueManager:
             if pair in self._sessions:
                 return
 
+            # V0.7 Phase C2.4: 锁内复检 agent_active 状态
+            # 外层 _check_encounters 也调 is_agent_active 早 bail, 但那是无锁读,
+            # 可能在两个 tick 紧挨时漏掉: tick N 的 task1 还没 acquire lock,
+            # tick N+1 的 is_agent_active 返回 False, 又调 trigger_dialogue。
+            # 在锁内复检一次, 保证 _active_agents 的状态在持锁期一致。
+            if agent_a_id in self._active_agents or agent_b_id in self._active_agents:
+                logger.debug(
+                    f"[Dialogue] 跳过 {agent_a_id}<->{agent_b_id}: "
+                    f"agent 已在其他对话中 (锁内复检)"
+                )
+                return
+
             # V0.7 Phase B: 全局并发上限(默认 1,= 占用 2 个 agent)
             if len(self._sessions) >= DIALOGUE_MAX_CONCURRENT:
                 logger.debug(

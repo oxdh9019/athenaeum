@@ -28,6 +28,29 @@ export default function Dashboard({
   const tickId = worldState?.tick_id ?? 0
   const locations = worldState?.locations ?? []
 
+  const recentEvents = (() => {
+    if (!worldState) return []
+    type Event = { tick: number; kind: 'action' | 'dialogue'; text: string; sub: string }
+    const events: Event[] = []
+    for (const a of worldState.recent_actions ?? []) {
+      events.push({
+        tick: a.tick,
+        kind: 'action',
+        text: `${a.agent_name} · ${a.action_type}`,
+        sub: a.description,
+      })
+    }
+    for (const d of worldState.recent_dialogues ?? []) {
+      events.push({
+        tick: d.tick,
+        kind: 'dialogue',
+        text: `${d.from} → ${d.to}`,
+        sub: d.utterance,
+      })
+    }
+    return events.sort((a, b) => b.tick - a.tick).slice(0, 5)
+  })()
+
   return (
     <div className="dashboard">
       <div className="card">
@@ -113,6 +136,24 @@ export default function Dashboard({
             </div>
           ))}
           {agents.length === 0 && <p className="empty">{T.dashboard.noAgents}</p>}
+        </div>
+      </div>
+
+      <div className="card">
+        <h3 className="card-title">{T.dashboard.recentEvents ?? '最近 5 个事件'}</h3>
+        <div className="event-list">
+          {recentEvents.map((ev, i) => (
+            <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid var(--border-default, #333)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: ev.kind === 'dialogue' ? 'var(--accent-cyan, #06b6d4)' : 'var(--accent-yellow, #f59e0b)' }}>
+                  {ev.kind === 'dialogue' ? (T.dashboard.dialogueEmoji ?? '💬') : (T.dashboard.actionEmoji ?? '🎬')} {ev.text}
+                </span>
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>tick {ev.tick}</span>
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{ev.sub}</div>
+            </div>
+          ))}
+          {recentEvents.length === 0 && <p className="empty">{T.dashboard.noEvents ?? '暂无事件'}</p>}
         </div>
       </div>
     </div>

@@ -783,6 +783,7 @@ async def get_world_state():
         "engine_running": s.engine_running,
         "applied": s.world is not None and bool(getattr(s.world, '_agents', None)),
         "session_id": getattr(s.world, '_world_session_id', None),
+        "recent_actions": list(getattr(s.world, '_recent_actions', []) or [])[-20:],
     }
 
 

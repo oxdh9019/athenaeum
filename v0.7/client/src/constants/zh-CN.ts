@@ -46,6 +46,10 @@ export const T = {
     addAgent: '添加角色',
     activeAgents: '活跃角色',
     noAgents: '暂无角色',
+    recentEvents: '最近 5 个事件',
+    noEvents: '暂无事件',
+    actionEmoji: '🎬',
+    dialogueEmoji: '💬',
   },
   locations: {
     library: '图书馆',

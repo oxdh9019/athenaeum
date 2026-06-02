@@ -451,6 +451,7 @@ class WorldEngine:
             return
 
         processed_pairs = set()
+        triggered = 0
 
         for agent_id in list(self._agents.keys()):
             neighbors = self._space.neighbors_of(agent_id)
@@ -466,9 +467,13 @@ class WorldEngine:
                     task = asyncio.create_task(
                         self._dialogue_mgr.trigger_dialogue(agent_id, neighbor_id, self._agent_registry)
                     )
-                    # 保留强引用；任务结束后自动从集合移除
                     self._dialogue_tasks.add(task)
                     task.add_done_callback(self._dialogue_tasks.discard)
+                    triggered += 1
+                    logger.debug(f"[encounter] tick={self._tick_id} trigger dialogue {agent_id}<->{neighbor_id}")
+
+        if triggered:
+            logger.debug(f"[encounter] tick={self._tick_id} triggered {triggered} dialogue(s)")
 
     # ==================== 对话记录 ====================
 

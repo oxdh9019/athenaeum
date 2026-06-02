@@ -6,11 +6,19 @@ V0.3 基础 + V0.5 记忆系统集成
 
 import asyncio
 import logging
+import os
 import re
+import time
 from typing import Optional, Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+# V0.7 Phase B 限流参数(可被环境变量覆盖)
+# 全局并发:1 个活动会话(2 个 agent 占用)
+DIALOGUE_MAX_CONCURRENT = int(os.environ.get("ATHENAEUM_DIALOGUE_MAX_CONCURRENT", "1"))
+# 同对冷却:120s 内同一对不重新触发(避免 LLM 预算耗尽)
+DIALOGUE_PAIR_COOLDOWN_SEC = float(os.environ.get("ATHENAEUM_DIALOGUE_COOLDOWN_SEC", "120"))
 
 
 class IntentType:
@@ -361,16 +369,10 @@ class DialogueSession:
                 max_tokens=200,
             )
 
-            import json
-            text = response.strip()
-            try:
-                data = json.loads(text)
-            except json.JSONDecodeError:
-                match = re.search(r'\{.*\}', text, re.DOTALL)
-                if match:
-                    data = json.loads(match.group())
-                else:
-                    raise ValueError("无法解析意图JSON")
+            from utils.llm_parsing import parse_llm_json
+            data = parse_llm_json(response)
+            if data is None:
+                raise ValueError("无法解析意图JSON")
 
             intent_type_str = data.get("intent_type", "wait")
             if intent_type_str not in ("greet", "ask", "share", "invite", "flee", "wait", "change_topic"):
@@ -502,11 +504,21 @@ class DialogueSession:
             utterance = ' '.join(cleaned_parts).strip()
 
             if not utterance or len(utterance.strip()) < 2:
-                utterance = f"（{speaker_name}沉默了一下）"
+                # LLM 返回了空或太短的内容——记录 + 上抛明确的错误（让调用方决定怎么呈现）
+                logger.warning(f"[Dialogue] LLM 返回空/过短内容，speaker={speaker_id}")
+                utterance = ""
+                # 不静默退回"沉默了一下"——会让用户以为 agent 在思考；改为让上层记录失败
 
         except Exception as e:
-            logger.error(f"LLM调用失败: {e}")
-            utterance = f"（{speaker_name}沉默了一下）"
+            logger.error(f"[Dialogue] LLM 调用失败: speaker={speaker_id}, error={e}")
+            utterance = ""
+
+        # LLM 失败/空响应时显式标记，让调用方知道这是失败而非真实沉默
+        if not utterance or len(utterance.strip()) < 2:
+            utterance = f"[对话生成失败: speaker={speaker_name}]"
+            is_fallback = True
+        else:
+            is_fallback = False
 
         return DialogueMessage(
             from_agent=speaker_id,
@@ -514,7 +526,7 @@ class DialogueSession:
             utterance=utterance,
             emotion_tag=Emotion.NEUTRAL,
             intent_type=IntentType.SHARE,
-            micro_action=self._maybe_generate_micro_action(speaker_agent, dialogue),
+            micro_action=self._maybe_generate_micro_action(speaker_agent, None),
         )
 
     def _maybe_generate_micro_action(self, speaker_agent, dialogue) -> Optional[str]:
@@ -590,30 +602,56 @@ class DialogueManager:
         self._archiver = archiver
         self._retriever = retriever
         self._router = router
+        self._lock = asyncio.Lock()  # 保护 _sessions 和 _active_agents 的并发修改
+        self._session_tasks: set = set()  # 保留 task 强引用，避免被 GC 回收
+        # V0.7 Phase B 限流:同对冷却记录(ended_at 时间戳)
+        self._pair_ended_at: dict[tuple[str, str], float] = {}
 
     async def trigger_dialogue(self, agent_a_id: str, agent_b_id: str, agent_registry: dict[str, Any]) -> None:
         pair = tuple(sorted([agent_a_id, agent_b_id]))
-        if pair in self._sessions:
-            return
 
-        agent_names = self._world.agent_names
+        async with self._lock:
+            if pair in self._sessions:
+                return
 
-        session = DialogueSession(
-            agent_a_id=agent_a_id,
-            agent_b_id=agent_b_id,
-            agent_names=agent_names,
-            llm=self._llm,
-            world=self._world,
-            archiver=self._archiver,
-            retriever=self._retriever,
-            router=self._router,
-        )
+            # V0.7 Phase B: 全局并发上限(默认 1,= 占用 2 个 agent)
+            if len(self._sessions) >= DIALOGUE_MAX_CONCURRENT:
+                logger.debug(
+                    f"[Dialogue] 跳过 {agent_a_id}<->{agent_b_id}: 全局并发上限 {DIALOGUE_MAX_CONCURRENT} 已满"
+                )
+                return
 
-        self._sessions[pair] = session
-        self._active_agents.add(agent_a_id)
-        self._active_agents.add(agent_b_id)
+            # V0.7 Phase B: 同对冷却
+            ended_at = self._pair_ended_at.get(pair)
+            if ended_at is not None:
+                elapsed = time.monotonic() - ended_at
+                if elapsed < DIALOGUE_PAIR_COOLDOWN_SEC:
+                    logger.debug(
+                        f"[Dialogue] 跳过 {agent_a_id}<->{agent_b_id}: 冷却中 "
+                        f"({elapsed:.0f}s / {DIALOGUE_PAIR_COOLDOWN_SEC:.0f}s)"
+                    )
+                    return
 
-        asyncio.create_task(self._run_session(session))
+            agent_names = self._world.agent_names
+
+            session = DialogueSession(
+                agent_a_id=agent_a_id,
+                agent_b_id=agent_b_id,
+                agent_names=agent_names,
+                llm=self._llm,
+                world=self._world,
+                archiver=self._archiver,
+                retriever=self._retriever,
+                router=self._router,
+            )
+
+            self._sessions[pair] = session
+            self._active_agents.add(agent_a_id)
+            self._active_agents.add(agent_b_id)
+
+            task = asyncio.create_task(self._run_session(session))
+            self._session_tasks.add(task)
+            task.add_done_callback(self._session_tasks.discard)
 
     async def _run_session(self, session: DialogueSession) -> None:
         try:
@@ -622,10 +660,13 @@ class DialogueManager:
         except Exception as e:
             logger.error(f"对话会话异常: {e}")
         finally:
-            self._active_agents.discard(session.agent_a)
-            self._active_agents.discard(session.agent_b)
-            pair = tuple(sorted([session.agent_a, session.agent_b]))
-            self._sessions.pop(pair, None)
+            async with self._lock:
+                self._active_agents.discard(session.agent_a)
+                self._active_agents.discard(session.agent_b)
+                pair = tuple(sorted([session.agent_a, session.agent_b]))
+                self._sessions.pop(pair, None)
+                # V0.7 Phase B: 记录结束时间,触发同对冷却
+                self._pair_ended_at[pair] = time.monotonic()
 
     def is_agent_active(self, agent_id: str) -> bool:
         return agent_id in self._active_agents

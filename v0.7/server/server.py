@@ -145,6 +145,7 @@ async def lifespan(app: FastAPI):
         archiver=None,
         retriever=None,
     )
+    world.set_dialogue_manager(dialogue_mgr)
 
     memory_archiver = MemoryArchiver(
         cloud_llm=cloud_llm,
@@ -410,6 +411,8 @@ async def start_world(_auth: None = Depends(require_api_key)):
 
     # V0.7: 启动所有 agent 的决策循环
     started = 0
+    reg_size = len(s.world._agent_registry) if s.world and s.world._agent_registry else 0
+    logger.debug(f"[start] agent_registry size = {reg_size}")
     for agent in s.world._agent_registry.values():
         if hasattr(agent, 'start') and hasattr(agent, '_running') and not agent._running:
             try:

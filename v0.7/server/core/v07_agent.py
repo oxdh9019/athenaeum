@@ -322,6 +322,7 @@ class V07Agent:
 
         current_tick = getattr(self._world, '_tick_id', 0)
         self._heartbeat_mode.sync_tick(current_tick)
+        logger.debug(f"[{self._name}] decide_action tick={current_tick} skip={self._heartbeat_mode.should_skip_tick(current_tick)}")
 
         # V0.7: 心跳模式检查
         if self._heartbeat_mode.should_skip_tick(current_tick):
@@ -482,6 +483,7 @@ class V07Agent:
 
     async def run(self) -> None:
         self._running = True
+        logger.debug(f"[{self._name}] run() LOOP START")
         while self._running:
             try:
                 tick_type = self._world.current_tick_type.value

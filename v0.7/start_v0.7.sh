@@ -17,7 +17,7 @@ source venv/bin/activate
 
 # 安装依赖
 echo "安装依赖..."
-pip install -q fastapi uvicorn pydantic httpx anthropic numpy 2>/dev/null
+pip install -q fastapi 'uvicorn[standard]' pydantic httpx anthropic numpy websockets 2>/dev/null
 
 # 启动选项
 echo ""

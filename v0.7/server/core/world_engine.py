@@ -5,6 +5,7 @@ V0.3 基础 + V0.5 记忆系统集成
 
 import asyncio
 import logging
+from collections import deque
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import Optional, Any
@@ -133,7 +134,8 @@ class WorldEngine:
         self._dialogue_mgr = None
 
         self._recent_dialogues: list[dict] = []
-        self._recent_actions: list[dict] = []
+        # deque(maxlen) 自动截断，避免长跑世界无限增长
+        self._recent_actions: deque[dict] = deque(maxlen=200)
 
         self._lock = asyncio.Lock()
         self._current_tick_type = TickType.SILENT
@@ -149,6 +151,9 @@ class WorldEngine:
 
         # V0.7 世界隔离 ID
         self._world_session_id = "default"
+
+        # 持有对话 task 引用，防止 asyncio.create_task 的弱引用被 GC 回收
+        self._dialogue_tasks: set = set()
 
     @property
     def agent_names(self) -> dict[str, str]:
@@ -180,6 +185,10 @@ class WorldEngine:
 
     def register_v05_agent(self, agent_id: str, agent):
         """注册 V0.5 Agent（含记忆系统）"""
+        self._agent_registry[agent_id] = agent
+
+    def register_v07_agent(self, agent_id: str, agent):
+        """注册 V0.7 Agent（拟人化版本：含 soul、目标、潜意识）"""
         self._agent_registry[agent_id] = agent
 
     def register_v03_agent(self, agent_id: str, agent):
@@ -454,9 +463,12 @@ class WorldEngine:
                 # 检查是否已经在对话中
                 if not self._dialogue_mgr.is_agent_active(agent_id) and \
                    not self._dialogue_mgr.is_agent_active(neighbor_id):
-                    asyncio.create_task(
+                    task = asyncio.create_task(
                         self._dialogue_mgr.trigger_dialogue(agent_id, neighbor_id, self._agent_registry)
                     )
+                    # 保留强引用；任务结束后自动从集合移除
+                    self._dialogue_tasks.add(task)
+                    task.add_done_callback(self._dialogue_tasks.discard)
 
     # ==================== 对话记录 ====================
 
@@ -477,12 +489,24 @@ class WorldEngine:
 
     # ==================== 世界重置 ====================
 
-    async def reset_world(self, world_data: dict, characters: list[dict], llm=None) -> None:
-        """重置世界，加载新生成的世界和角色数据"""
-        import uuid
+    async def reset_world(
+        self,
+        world_data: dict,
+        characters: list[dict],
+        llm=None,
+        cloud_llm=None,
+        local_llm=None,
+        archiver=None,
+        retriever=None,
+        forgetting_curves: dict = None,
+    ) -> None:
+        """
+        重置世界,加载新生成的世界和角色数据(使用 V07Agent)。
+        """
+        from utils.ids import short_id
         async with self._lock:
-            # V0.7: 生成新的世界会话 ID，实现数据隔离
-            self._world_session_id = str(uuid.uuid4())[:8]
+            # V0.7: 生成新的世界会话 ID,实现数据隔离(48-bit 熵)
+            self._world_session_id = short_id()
 
             self._agents.clear()
             self._agent_registry.clear()
@@ -505,36 +529,64 @@ class WorldEngine:
                 )
                 self.register_location(location)
 
-            # 加载新角色
-            from core.agent import MinimalAgent
+            # 加载新角色(V07Agent)
+            from core.v07_agent import V07Agent
+            from core.heartbeat_mode import HeartbeatConfig
+
+            heartbeat_min = forgetting_curves.pop("_heartbeat_min", 4) if forgetting_curves else 4
+            heartbeat_max = forgetting_curves.pop("_heartbeat_max", 8) if forgetting_curves else 8
+
             for char_data in characters:
                 agent_id = char_data["id"]
                 name = char_data["name"]
                 location_id = char_data.get("initial_location", "")
                 if location_id and location_id not in self._locations:
                     location_id = list(self._locations.keys())[0] if self._locations else ""
+                personality = char_data.get("personality") or {
+                    "openness": 0.6, "conscientiousness": 0.5, "extraversion": 0.5,
+                    "agreeableness": 0.5, "neuroticism": 0.4,
+                }
+                soul = char_data.get("soul") or {}
+                occupation = char_data.get("occupation") or (
+                    char_data.get("identity_tags", {}).get("primary", "") if isinstance(char_data.get("identity_tags"), dict) else ""
+                )
+                forgetting_curve = (forgetting_curves or {}).get(agent_id)
+
+                # heartbeat 用全局 env 配置
+                hb_config = HeartbeatConfig(
+                    enabled=True,
+                    min_interval=heartbeat_min,
+                    max_interval=heartbeat_max,
+                    base_interval=max(heartbeat_min, min(heartbeat_max, 6)),
+                )
+
                 if location_id:
                     self.register_agent(agent_id, name, location_id)
-                    agent = MinimalAgent(
+                    agent = V07Agent(
                         agent_id=agent_id,
                         name=name,
-                        llm=llm,
+                        personality=personality,
+                        occupation=occupation,
+                        soul=soul,
+                        llm=llm or local_llm or cloud_llm,
                         world=self,
                         initial_location=location_id,
+                        cloud_llm=cloud_llm,
+                        local_llm=local_llm,
+                        archiver=archiver,
+                        retriever=retriever,
+                        forgetting_curve=forgetting_curve,
                     )
-                    if char_data.get("personality"):
-                        agent.personality = char_data["personality"]
-                    if char_data.get("identity_tags"):
-                        agent.identity_tags = char_data["identity_tags"]
-                    if char_data.get("mood"):
-                        agent.mood = char_data["mood"]
-                    if char_data.get("intention"):
-                        agent.intention = char_data["intention"]
-                    if char_data.get("backstory"):
-                        agent.backstory = char_data["backstory"]
-                    self.register_v05_agent(agent_id, agent)
+                    # 异步初始化(从 soul 生成目标)
+                    try:
+                        await agent.initialize()
+                    except Exception as e:
+                        logger.warning(f"[WorldEngine] agent {name}.initialize() 失败: {e}")
+                    self.register_v07_agent(agent_id, agent)
+                else:
+                    logger.warning(f"[WorldEngine] 角色 {name} 没有合法 location,跳过")
 
-            logger.info(f"[WorldEngine] 世界已重置: {len(self._locations)} 地点, {len(self._agents)} 角色")
+            logger.info(f"[WorldEngine] 世界已重置: {len(self._locations)} 地点, {len(self._agents)} 角色 (V07Agent)")
 
     # ==================== 状态序列化 ====================
 
@@ -548,14 +600,47 @@ class WorldEngine:
             is_active = False
             if hasattr(self, '_dialogue_mgr') and self._dialogue_mgr:
                 is_active = self._dialogue_mgr.is_agent_active(agent_id)
+
+            # V0.7: 从 V07Agent 读富字段
+            emotion_state = None
+            active_goal = None
+            current_action = None
+            last_decision = None
+            if agent is not None and hasattr(agent, 'get_emotion_state'):
+                try:
+                    emotion_state = agent.get_emotion_state()
+                except Exception:
+                    pass
+            if agent is not None and hasattr(agent, '_goal_manager'):
+                try:
+                    g = agent._goal_manager.active_goal
+                    if g is not None:
+                        active_goal = {
+                            "id": g.id if hasattr(g, 'id') else None,
+                            "type": g.goal_type.value if hasattr(g, 'goal_type') and g.goal_type else None,
+                            "description": g.description if hasattr(g, 'description') else str(g),
+                            "progress": getattr(g, 'progress', 0.0) if hasattr(g, 'progress') else 0.0,
+                        }
+                except Exception:
+                    pass
+            if agent is not None and hasattr(agent, '_state') and isinstance(agent._state, dict):
+                current_action = agent._state.get("current_action")
+                last_decision = agent._state.get("last_decision")
+
+            # mood: 字符串或 None; backend 留 None 而不是 "" 让前端用 ?. 兜底
+            raw_mood = getattr(agent, 'mood', None) if agent is not None else None
             result.append({
                 "id": agent_id,
                 "name": info["name"],
                 "location": location,
                 "neighbors": neighbors,
                 "is_active": is_active,
-                "mood": getattr(agent, 'mood', None),
-                "personality": getattr(agent, 'personality', None),
+                "mood": raw_mood if isinstance(raw_mood, str) else None,
+                "personality": getattr(agent, 'personality', None) if agent is not None else None,
+                "emotion_state": emotion_state,
+                "active_goal": active_goal,
+                "current_action": current_action,
+                "last_decision": last_decision,
             })
         return result
 
@@ -587,5 +672,5 @@ class WorldEngine:
             "agents": self._serialize_agents(),
             "locations": self._serialize_locations(),
             "recent_dialogues": self._recent_dialogues[-20:],
-            "recent_actions": self._recent_actions[-15:],
+            "recent_actions": list(self._recent_actions)[-15:],
         }

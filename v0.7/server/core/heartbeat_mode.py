@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 class HeartbeatConfig:
     """心跳模式配置"""
     enabled: bool = True
-    min_interval: int = 5   # 最小Tick间隔
-    max_interval: int = 20  # 最大Tick间隔
-    base_interval: int = 10 # 默认Tick间隔
+    min_interval: int = 4   # 最小Tick间隔（V0.7: 默认 4 tick，配合 30s tick = 2 分钟/决策）
+    max_interval: int = 8   # 最大Tick间隔（V0.7: 默认 8 tick，配合 30s tick = 4 分钟/决策）
+    base_interval: int = 6  # 默认Tick间隔
 
 
 class HeartbeatMode:

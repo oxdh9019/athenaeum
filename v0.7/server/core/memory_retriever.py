@@ -4,6 +4,7 @@ memory_retriever.py — V0.5 语义检索
 V0.7: 支持 JSON fallback 回读（当 Chroma 不可用时）
 """
 
+import asyncio
 import logging
 import json
 from pathlib import Path
@@ -35,12 +36,15 @@ class MemoryRetriever:
     - 不缓存 Chroma 集合，直接获取由客户端管理连接
     """
 
-    def __init__(self, local_llm, chroma_client=None, embedder=None):
+    def __init__(self, local_llm, chroma_client=None, embedder=None, shared_lock=None):
         """
         Args:
             local_llm: 本地 Qwen（用于重排序）
             chroma_client: Chroma 客户端
             embedder: embedding 生成器（bge-m3），如果没有则用 local_llm
+            shared_lock: 可选，与 MemoryArchiver 共享的 asyncio.Lock；
+                保证 archiver 的 collection 重建期间不会有 retriever query 撞上 None。
+                不传则使用 retriever 自己的锁（保护 retriever 内部一致性）。
         """
         self._local = local_llm
         self._chroma = chroma_client
@@ -49,6 +53,8 @@ class MemoryRetriever:
         self._session_id = "default"
         # V0.7: JSON fallback 目录（与 archiver 相同路径）
         self._fallback_dir = Path("./archiver_fallback")
+        # 共享锁：让 archiver 的 collection 重建与 retriever 的 query 互斥
+        self._lock = shared_lock or asyncio.Lock()
 
     async def retrieve(
         self,
@@ -74,84 +80,123 @@ class MemoryRetriever:
             Top-3 检索结果
         """
         if self._chroma is None:
-            logger.warning(f"[Retriever] [{agent_id}] Chroma 未初始化，无法检索")
-            return []
+            # V0.7: Chroma 不可用时,回退到 JSON 文件读取
+            logger.debug(f"[Retriever] [{agent_id}] Chroma 未初始化,使用 JSON fallback")
+            return await self._retrieve_from_json(agent_id, query_text, current_tick, top_k)
 
         collection_name = f"{self._session_id}_{agent_id}_longterm"
 
-        try:
-            # 直接获取集合，不缓存，由 Chroma 客户端管理连接
+        # 持锁：与 archiver 的 collection 重建互斥（如果共享了锁）
+        async with self._lock:
             try:
-                collection = self._chroma.get_collection(name=collection_name)
-            except Exception:
-                logger.info(f"[Retriever] [{agent_id}] 集合 {collection_name} 不存在")
-                return []
-
-            # 生成 query embedding
-            query_embedding = await self._generate_embedding(query_text)
-            if not query_embedding:
-                logger.warning(f"[Retriever] [{agent_id}] embedding 生成失败")
-                return []
-
-            # Chroma 检索 Top-5
-            try:
-                results = collection.query(
-                    query_embeddings=[query_embedding],
-                    n_results=top_k,
-                )
-            except Exception as query_error:
-                # 维度不匹配错误：删除集合，下次检索时会重建
-                if "dimension" in str(query_error).lower() or "expecting" in str(query_error).lower():
-                    logger.warning(f"[Retriever] [{agent_id}] 集合维度不匹配，删除并重建: {query_error}")
-                    try:
-                        self._chroma.delete_collection(collection_name)
-                    except Exception:
-                        pass
+                # 直接获取集合，不缓存，由 Chroma 客户端管理连接
+                try:
+                    collection = self._chroma.get_collection(name=collection_name)
+                except Exception:
+                    logger.info(f"[Retriever] [{agent_id}] 集合 {collection_name} 不存在")
                     return []
-                raise query_error
 
-            if not results or not results.get("documents"):
-                return []
+                # 生成 query embedding
+                query_embedding = await self._generate_embedding(query_text)
+                if not query_embedding:
+                    logger.warning(f"[Retriever] [{agent_id}] embedding 生成失败")
+                    return []
 
-            documents = results["documents"][0]
-            metadatas = results["metadatas"][0]
-            distances = results.get("distances", [[1.0] * len(documents)])[0]
+                # Chroma 检索 Top-5
+                try:
+                    results = collection.query(
+                        query_embeddings=[query_embedding],
+                        n_results=top_k,
+                    )
+                except Exception as query_error:
+                    # 维度不匹配错误：删除集合，下次检索时会重建
+                    if "dimension" in str(query_error).lower() or "expecting" in str(query_error).lower():
+                        logger.warning(f"[Retriever] [{agent_id}] 集合维度不匹配，删除并重建: {query_error}")
+                        try:
+                            self._chroma.delete_collection(collection_name)
+                        except Exception:
+                            pass
+                        return []
+                    raise query_error
 
-            # 构建候选记忆列表
-            candidates = []
-            for i, (doc, meta, dist) in enumerate(zip(documents, metadatas, distances)):
-                # 计算相似度分数（1 - distance）
-                similarity = 1.0 - min(dist, 1.0)
+                if not results or not results.get("documents"):
+                    return []
 
-                # 计算遗忘衰减
-                tick_created = meta.get("tick_created", 0)
-                delta_t = current_tick - tick_created
-                lambda_base = 0.03
-                lambda_value = lambda_base + (0.5 - neuroticism) * 0.04
-                decay = __import__('math').exp(-lambda_value * delta_t)
+                documents = results["documents"][0]
+                metadatas = results["metadatas"][0]
+                distances = results.get("distances", [[1.0] * len(documents)])[0]
 
-                importance = meta.get("importance", 0.5)
-                # 综合评分 = 相似度 * 重要性 * 衰减
-                combined_score = similarity * importance * decay
+                # 构建候选记忆列表
+                candidates = []
+                for i, (doc, meta, dist) in enumerate(zip(documents, metadatas, distances)):
+                    # 计算相似度分数（1 - distance）
+                    similarity = 1.0 - min(dist, 1.0)
 
-                candidates.append(RetrievedMemory(
-                    memory_id=meta.get("memory_id", f"unknown_{i}"),
-                    content=doc,
+                    # 计算遗忘衰减
+                    tick_created = meta.get("tick_created", 0)
+                    delta_t = current_tick - tick_created
+                    lambda_base = 0.03
+                    lambda_value = lambda_base + (0.5 - neuroticism) * 0.04
+                    decay = __import__('math').exp(-lambda_value * delta_t)
+
+                    importance = meta.get("importance", 0.5)
+                    # 综合评分 = 相似度 * 重要性 * 衰减
+                    combined_score = similarity * importance * decay
+
+                    candidates.append(RetrievedMemory(
+                        memory_id=meta.get("memory_id", f"unknown_{i}"),
+                        content=doc,
+                        agent_id=agent_id,
+                        emotion=meta.get("emotion", "neutral"),
+                        importance=importance,
+                        relevance_score=combined_score,
+                        tick_created=tick_created,
+                    ))
+
+                # 本地 Qwen 重排序
+                reranked = await self._rerank_candidates(query_text, candidates)
+
+                # 返回 Top-3
+                return reranked[:final_top]
+
+            except Exception as e:
+                logger.error(f"[Retriever] [{agent_id}] Chroma 检索失败: {e}")
+                # 降级到 JSON fallback：返回该 agent 最近的 N 条记忆（非语义，但至少有内容）
+                return await self._fallback_to_json(query_text, agent_id, final_top)
+
+    async def _fallback_to_json(self, query_text: str, agent_id: str, final_top: int) -> list:
+        """
+        Chroma 不可用时的降级路径：从 JSON fallback 读取最近 N 条，
+        按时间倒序返回。不做语义匹配，但至少保证有内容而不是空。
+        """
+        from core.forgetting_curve import MemoryEntry
+
+        session_dir = self._fallback_dir / self._session_id
+        if not session_dir.exists():
+            logger.info(f"[Retriever] [{agent_id}] 无 JSON fallback（目录不存在）")
+            return []
+
+        try:
+            json_files = sorted(session_dir.glob(f"{agent_id}_*.json"), reverse=True)[:final_top]
+            entries = []
+            for json_file in json_files:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                entry = MemoryEntry(
+                    memory_id=data.get("memory_id", json_file.stem),
                     agent_id=agent_id,
-                    emotion=meta.get("emotion", "neutral"),
-                    importance=importance,
-                    relevance_score=combined_score,
-                    tick_created=tick_created,
-                ))
-
-            # 本地 Qwen 重排序
-            reranked = await self._rerank_candidates(query_text, candidates)
-
-            # 返回 Top-3
-            return reranked[:final_top]
-
+                    content=data.get("summary_text", ""),
+                    tick_created=data.get("tick_created", 0),
+                    importance=float(data.get("importance_score", 0.5)),
+                    emotion=data.get("emotion", "neutral"),
+                    is_core=data.get("core_memory", False),
+                    context=f"participants: {data.get('participants', [])}",
+                )
+                entries.append(entry)
+            logger.info(f"[Retriever] [{agent_id}] 降级从 JSON 读取 {len(entries)} 条记忆")
+            return entries
         except Exception as e:
-            logger.error(f"[Retriever] [{agent_id}] 检索失败: {e}")
+            logger.error(f"[Retriever] [{agent_id}] JSON fallback 也失败: {e}")
             return []
 
     async def _generate_embedding(self, text: str) -> Optional[list[float]]:
@@ -212,15 +257,11 @@ class MemoryRetriever:
                 max_tokens=100,
             )
 
-            import json
-            import re
+            from utils.llm_parsing import parse_llm_json
 
-            text = response.strip()
-            match = re.search(r'\{.*\}', text, re.DOTALL)
-            if match:
-                data = json.loads(match.group())
-            else:
-                data = json.loads(text)
+            data = parse_llm_json(response)
+            if data is None:
+                raise json.JSONDecodeError("无法解析 selected indices JSON", response, 0)
 
             selected_indices = data.get("selected", [])
             if not selected_indices or len(selected_indices) == 0:
@@ -266,6 +307,63 @@ class MemoryRetriever:
     def set_session_id(self, session_id: str) -> None:
         """V0.7: 设置世界会话 ID（用于数据隔离）"""
         self._session_id = session_id
+
+    async def _retrieve_from_json(
+        self,
+        agent_id: str,
+        query_text: str,
+        current_tick: int,
+        top_k: int = 5,
+    ) -> list[RetrievedMemory]:
+        """
+        V0.7: Chroma 不可用时,从 JSON fallback 文件检索记忆。
+        使用关键词匹配作为简单替代(无 embedding,无 rerank),但保证 [RECALL] 块不为空。
+        """
+        import math
+        session_dir = self._fallback_dir / self._session_id
+        if not session_dir.exists():
+            return []
+
+        json_files = sorted(session_dir.glob(f"{agent_id}_*.json"))
+        if not json_files:
+            return []
+
+        # 简单关键词评分: query 中出现的 token 在 summary 中出现的次数
+        query_tokens = set(query_text)
+        scored: list[tuple[float, RetrievedMemory]] = []
+
+        for json_file in json_files[-50:]:  # 最近 50 条
+            try:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                content = data.get("summary_text", "") or data.get("content", "")
+                tick_created = data.get("tick_created", 0)
+                delta_t = max(0, current_tick - tick_created)
+                # 遗忘衰减
+                decay = math.exp(-0.03 * delta_t)
+                # 关键词重叠分数
+                content_tokens = set(content)
+                overlap = len(query_tokens & content_tokens)
+                relevance = overlap / max(1, len(query_tokens))
+                # 综合分数 = 相关性 * 重要性 * 衰减
+                importance = float(data.get("importance_score", 0.5))
+                combined = relevance * importance * decay
+
+                mem = RetrievedMemory(
+                    memory_id=data.get("memory_id", json_file.stem),
+                    content=content,
+                    agent_id=agent_id,
+                    emotion=data.get("emotion", "neutral"),
+                    importance=importance,
+                    relevance_score=combined,
+                    tick_created=tick_created,
+                )
+                scored.append((combined, mem))
+            except Exception as e:
+                logger.debug(f"[Retriever] JSON fallback 读取失败 {json_file}: {e}")
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [mem for _, mem in scored[:top_k]]
         logger.info(f"[Retriever] 会话 ID 已更新: {session_id}")
 
     async def retrieve_by_agent(self, agent_id: str, max_count: int = 100) -> list:

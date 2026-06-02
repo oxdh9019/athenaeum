@@ -6,17 +6,35 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{ts,tsx,js,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{ts,tsx,js,json,md}\"",
+    "test:smoke": "playwright test smoke.spec.ts",
+    "test:scan": "playwright test scan.spec.ts",
+    "test:full": "playwright test e2e.spec.ts",
+    "test": "playwright test"
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.3.0",
     "typescript": "^5.3.0",
+    "typescript-eslint": "^8.0.0",
     "vite": "^5.4.21"
   }
 }

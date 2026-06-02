@@ -32,6 +32,13 @@ class V07Agent:
         archiver=None,
         retriever=None,
         forgetting_curve=None,
+        # 拟人化子系统依赖注入点：测试时可直接传 mock；None 时按默认创建
+        goal_manager=None,
+        daily_planner=None,
+        emotion_model=None,
+        personality_filter=None,
+        heartbeat_mode=None,
+        subconscious_engine=None,
     ):
         self._agent_id = agent_id
         self._name = name
@@ -60,41 +67,45 @@ class V07Agent:
         # 对话归档缓冲
         self._dialogue_buffer: list[dict] = []
 
-        # ========== V0.7 拟人化组件 ==========
+        # V0.7: agent 当前状态(供前端/序列化读取)
+        self._state: dict = {
+            "current_action": None,
+            "last_decision": None,
+            "last_decision_tick": 0,
+        }
+
+        # ========== V0.7 拟人化组件（依赖注入友好） ==========
+        # 生产路径：调用方不传，agent 自己 new；测试路径：调用方传 mock。
 
         # 目标管理器
         from .goal_manager import GoalManager
-        self._goal_manager = GoalManager(agent_id, personality)
-        if soul:
-            existing_rels = getattr(self, '_relationships', [])
-            asyncio.create_task(
-                self._goal_manager.generate_goals_from_soul(
-                    soul, personality, initial_location, existing_rels
-                )
-            )
+        self._goal_manager = goal_manager or GoalManager(agent_id, personality)
+        # 注意：目标生成是 async 工作，在 initialize() 中执行（见下方）。
+        # 不在 __init__ 用 asyncio.create_task：sync 上下文调用时没有运行中的 loop，
+        # 且 create_task 的弱引用可能在 await 前被 GC 回收。
 
         # 日程规划器
         from .daily_planner import DailyPlanner
-        self._daily_planner = DailyPlanner(agent_id)
+        self._daily_planner = daily_planner or DailyPlanner(agent_id)
         self._sync_daily_plan()
 
         # 情绪模型
         from .emotion_model import EmotionModel
-        self._emotion_model = EmotionModel(agent_id, initial_valence=0.0, initial_arousal=0.3)
+        self._emotion_model = emotion_model or EmotionModel(agent_id, initial_valence=0.0, initial_arousal=0.3)
 
         # 性格过滤器
         from .personality_filter import PersonalityFilter
-        self._personality_filter = PersonalityFilter(personality)
+        self._personality_filter = personality_filter or PersonalityFilter(personality)
 
         # 心跳模式
         from .heartbeat_mode import HeartbeatMode, HeartbeatConfig
         config = HeartbeatConfig(enabled=True, base_interval=10)
-        self._heartbeat_mode = HeartbeatMode(agent_id, personality, config)
+        self._heartbeat_mode = heartbeat_mode or HeartbeatMode(agent_id, personality, config)
 
         # V0.7: 潜意识引擎
         from .subconscious_engine import SubconsciousEngine, SoulConfig
         soul_config = SoulConfig.from_dict(soul) if soul else SoulConfig()
-        self._subconscious_engine = SubconsciousEngine(agent_id, soul_config)
+        self._subconscious_engine = subconscious_engine or SubconsciousEngine(agent_id, soul_config)
 
         # V0.7: 目标管理器关联组件
         self._goal_manager.set_emotion_model(self._emotion_model)
@@ -115,6 +126,18 @@ class V07Agent:
             goal_type=goal_type,
             game_hour=current_hour,
         )
+
+    async def initialize(self) -> None:
+        """
+        异步初始化：在 __init__ 之后调用一次。
+        完成需要运行中 event loop 的初始化工作（当前：从 soul 生成目标）。
+        必须在 agent 注册到世界之前由调用方 await，确保目标在角色被使用前就绪。
+        """
+        if self._soul:
+            existing_rels = getattr(self, '_relationships', [])
+            await self._goal_manager.generate_goals_from_soul(
+                self._soul, self._personality, self._current_location, existing_rels
+            )
 
     @property
     def id(self) -> str:
@@ -342,7 +365,11 @@ class V07Agent:
                 filtered = self._personality_filter.filter(intent)
                 if filtered is None:
                     logger.info(f"[{self._name}] 意图被性格过滤否决: {intent.get('action_type')}")
-                    return {"action_type": "wait", "target": None}
+                    filtered = {"action_type": "wait", "target": None, "reasoning": "filtered"}
+                # V0.7: 写入 agent 状态(供前端读取)
+                self._state["last_decision"] = filtered
+                self._state["last_decision_tick"] = current_tick
+                self._state["current_action"] = filtered.get("action_type", "wait")
                 return filtered
             return None
         except Exception as e:
@@ -432,27 +459,26 @@ class V07Agent:
 只输出JSON，不要其他内容。"""
 
     def _parse_intent(self, response: str) -> Optional[dict]:
-        import json
-        import re
-        try:
-            match = re.search(r'\{[^}]+\}', response)
-            if match:
-                parsed = json.loads(match.group())
-                # 确保有 action_type 字段
-                if 'action_type' in parsed or 'action' in parsed:
-                    intent = {
-                        "action_type": parsed.get('action_type', parsed.get('action', 'wait')),
-                        "target": parsed.get('target'),
-                        "urgency": parsed.get('urgency', 0.5),
-                        "reasoning": parsed.get('reasoning', ''),
-                        "mode": parsed.get('mode', 'reactive'),
-                    }
-                    return intent
-        except json.JSONDecodeError:
-            pass
+        from utils.llm_parsing import parse_llm_json
+        parsed = parse_llm_json(response)
+        if parsed is not None and ('action_type' in parsed or 'action' in parsed):
+            return {
+                "action_type": parsed.get('action_type', parsed.get('action', 'wait')),
+                "target": parsed.get('target'),
+                "urgency": parsed.get('urgency', 0.5),
+                "reasoning": parsed.get('reasoning', ''),
+                "mode": parsed.get('mode', 'reactive'),
+            }
         return None
 
     # ==================== 运行循环 ====================
+    # 审计注记 (P2-8.1)：每个 agent 启动一个 polling task (1.0s 间隔) 在
+    # 多角色场景下不经济。理想的"共享 tick"实现：世界 tick 一次性调用
+    # world.agents()，对每个 agent 调用 on_tick()。V0.7 保持现有 per-agent
+    # task（角色数 2-5 的当前场景下成本可接受），等 v0.8 用户量增长后再统一重构。
+    # 候选 API：
+    #   async def on_tick(self, tick_type, env_state, neighbors, current_tick) -> None
+    #   world_engine._run_world_tick 中遍历 self._agents 并 await on_tick
 
     async def run(self) -> None:
         self._running = True
@@ -520,6 +546,44 @@ class V07Agent:
                 await self._task
             except asyncio.CancelledError:
                 pass
+
+    # ==================== V0.7 附身回复 ====================
+
+    async def respond_to_possess(self, message: str) -> str:
+        """
+        附身模式:用户消息 → LLM 单次回复
+        提示词包含角色身份 + 当前情绪 + 最近的 3 条记忆
+        """
+        soul_summary = self._soul if isinstance(self._soul, str) else str(self._soul)[:200]
+        emotion = self.get_emotion_state()
+        recent = self._short_term_memory[-3:] if self._short_term_memory else []
+        recent_text = "\n".join(f"- {role}: {content}" for role, content in recent) or "(无近期记忆)"
+
+        prompt = f"""你正在扮演角色: {self._name} (职业: {self._occupation})
+性格 (Big Five): {self._personality_desc}
+灵魂摘要: {soul_summary}
+当前情绪: valence={emotion.get('valence', 0):.2f}, arousal={emotion.get('arousal', 0):.2f}
+最近记忆:
+{recent_text}
+
+用户对你说: "{message}"
+
+请以 {self._name} 的身份, 用 1-2 句中文口语化回应 (不超过 60 字). 直接说,不要前缀/解释/标签."""
+
+        try:
+            response = await self._llm.chat(
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.8,
+                max_tokens=100,
+            )
+            # 清理 [SPEAK]...[THINK]... 等残留
+            for tag in ("[SPEAK]", "[/SPEAK]", "[THINK]", "[/THINK]"):
+                response = response.replace(tag, "")
+            response = response.strip().strip('"').strip()
+            return response
+        except Exception as e:
+            logger.error(f"[{self._name}] respond_to_possess 失败: {e}")
+            return f"({self._name} 此刻无法回应)"
 
     # ==================== V0.7 目标完成回调 ====================
 

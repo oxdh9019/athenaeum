@@ -562,7 +562,7 @@ class V07Agent:
         recent_text = "\n".join(f"- {role}: {content}" for role, content in recent) or "(无近期记忆)"
 
         prompt = f"""你正在扮演角色: {self._name} (职业: {self._occupation})
-性格 (Big Five): {self._personality_desc}
+性格 (Big Five): {self.personality_desc}
 灵魂摘要: {soul_summary}
 当前情绪: valence={emotion.get('valence', 0):.2f}, arousal={emotion.get('arousal', 0):.2f}
 最近记忆:

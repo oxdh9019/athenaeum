@@ -1,81 +1,117 @@
-import { useState, useEffect, useRef } from 'react'
+/**
+ * App.tsx — V0.7 模块化主应用
+ * 使用 Tab 导航，集成 Dashboard/Agents/Dialogue/Soul/Diary/Timeline/Map/Possess 视图
+ */
+
+import { useState, useEffect, useRef, useCallback } from 'react'
+import './styles/global.css'
+import { WorldProvider } from './context/WorldContext'
+import { useWorldSocket } from './hooks/useWorldSocket'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import TopBar from './components/TopBar'
+import ControlBar from './components/ControlBar'
+import RoleCards from './components/RoleCards'
+import DiaryView from './components/DiaryView'
+import TimelineView from './components/TimelineView'
+import MapCanvas from './components/MapCanvas'
+import PossessMode, { type PossessTurn } from './components/PossessMode'
+import Worldsmith from './components/Worldsmith'
+import {
+  WorldStateSchema,
+  RouterStatsSchema,
+  HealthResponseSchema,
+  fetchJson,
+  type Agent,
+  type WorldState,
+  type DialogueEntry,
+  type RouterStats,
+} from './types/api'
+import type { Memory } from './components/DiaryView'
+import type { TimelineEvent } from './components/TimelineView'
+import Dashboard from './views/Dashboard'
+import AgentsView from './views/AgentsView'
+import DialogueView from './views/DialogueView'
+import SoulView from './views/SoulView'
+import { T } from './constants/zh-CN'
 
 const API_BASE = 'http://localhost:8000'
 
-interface Agent {
-  id: string
-  name: string
-  location: string
-  occupation?: string
-  personality?: Record<string, number>
-  soul?: {
-    core_desires?: Array<{ name: string; level: number }>
-    inner_conflict?: { description: string }
-    subconscious_rules?: Array<{ trigger: string; action: string }>
-  }
-  emotion_state?: { label: string; valence: number; arousal: number }
-  active_goal?: string
-  goal_progress?: number
-}
+type ViewMode = 'dashboard' | 'agents' | 'dialogue' | 'soul' | 'diary' | 'timeline' | 'map' | 'possess' | 'worldsmith'
 
-interface DialogueEntry {
-  from: string
-  to: string
-  utterance: string
-  micro_action?: string
-  tick: number
-}
-
-interface WorldState {
-  tick_id: number
-  time_of_day: string
-  weather: string
-  agents: Agent[]
-  locations: string[]
-  dialogues: DialogueEntry[]
-}
-
-type ViewMode = 'dashboard' | 'agents' | 'dialogue' | 'soul' | 'world'
-
-function App() {
+function AppContent() {
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard')
   const [worldState, setWorldState] = useState<WorldState | null>(null)
   const [connected, setConnected] = useState(false)
   const [dialogues, setDialogues] = useState<DialogueEntry[]>([])
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [agents, setAgents] = useState<Agent[]>([])
-  const dialogueEndRef = useRef<HTMLDivElement>(null)
+  const [routerStats, setRouterStats] = useState<RouterStats | undefined>(undefined)
+  const [paused, setPaused] = useState(false)
+  const [possessAgent, setPossessAgent] = useState<Agent | null>(null)
+  const [possessTurns, setPossessTurns] = useState<PossessTurn[]>([])
+  const [possessPending, setPossessPending] = useState(false)
+  const [diaryMemories, setDiaryMemories] = useState<Memory[]>([])
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
+  const dialogueScrollRef = useRef<HTMLDivElement>(null)
 
-  // 连接后端 WebSocket 或轮询
-  useEffect(() => {
-    const connect = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/health`)
-        if (res.ok) {
+  // WS 驱动的实时状态推送；轮询仅作为 WS 断线时的兜底
+  const { connectionState, send: wsSend } = useWorldSocket({
+    onMessage: (data) => {
+      if (data?.type === 'state' && (data as { data?: unknown }).data) {
+        const parsed = WorldStateSchema.safeParse((data as { data: unknown }).data)
+        if (parsed.success) {
+          setWorldState(parsed.data)
+          setAgents(parsed.data.agents)
+          setDialogues(parsed.data.recent_dialogues)
           setConnected(true)
-          fetchState()
         }
-      } catch {
-        setConnected(false)
+      }
+    },
+    onPossessReply: ({ agent_id, text }) => {
+      setPossessPending(false)
+      setPossessTurns(prev => [...prev, { role: 'agent', text, ts: Date.now() }])
+      // 同步更新该 agent 的情绪/状态(可选)
+      setAgents(prev => prev.map(a => a.id === agent_id ? { ...a } : a))
+    },
+    onClose: () => setConnected(false),
+  })
+
+  // 健康探测 + 路由统计：单独轮询（不需要 WS 推送）
+  useEffect(() => {
+    const probeHealth = async () => {
+      const health = await fetchJson(`${API_BASE}/health`, HealthResponseSchema)
+      if (health) {
+        setConnected(health.status === 'healthy')
+        if (health.status === 'healthy' && !worldState) fetchState()
       }
     }
-    connect()
-    const interval = setInterval(fetchState, 3000)
-    return () => clearInterval(interval)
-  }, [])
+    probeHealth()
+    const healthInterval = setInterval(probeHealth, 30000)  // 30s 心跳，不再 3s 轮询
+    const statsInterval = setInterval(fetchRouterStats, 10000)
+    // WS 长时间没连接时降级为轮询
+    let pollFallback: ReturnType<typeof setInterval> | null = null
+    if (connectionState !== 'connected') {
+      pollFallback = setInterval(fetchState, 5000)
+    }
+    return () => {
+      clearInterval(healthInterval)
+      clearInterval(statsInterval)
+      if (pollFallback) clearInterval(pollFallback)
+    }
+  }, [connectionState])
 
   const fetchState = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/world/state`)
-      if (res.ok) {
-        const data = await res.json()
-        setWorldState(data)
-        if (data.agents) setAgents(data.agents)
-        if (data.dialogues) {
-          setDialogues(prev => [...prev, ...data.dialogues].slice(-100))
-        }
-      }
-    } catch {}
+    const data = await fetchJson(`${API_BASE}/world/state`, WorldStateSchema)
+    if (data) {
+      setWorldState(data)
+      setAgents(data.agents)
+      setDialogues(data.recent_dialogues)
+    }
+  }
+
+  const fetchRouterStats = async () => {
+    const stats = await fetchJson(`${API_BASE}/router/stats`, RouterStatsSchema)
+    setRouterStats(stats ?? undefined)
   }
 
   const createWorld = async () => {
@@ -115,286 +151,194 @@ function App() {
     })
   }
 
+  const handleApplyToEngine = async () => {
+    await fetchState()
+    setViewMode('dashboard')
+  }
+
   const startWorld = async () => {
     await fetch(`${API_BASE}/world/start`, { method: 'POST' })
     fetchState()
   }
 
+  const togglePause = async () => {
+    const newPaused = !paused
+    setPaused(newPaused)
+    await fetch(newPaused ? `${API_BASE}/engine/pause` : `${API_BASE}/engine/resume`, { method: 'POST' })
+  }
+
+  const handleStop = async () => {
+    if (confirm('确定要停止服务器吗？')) {
+      try {
+        await fetch(`${API_BASE}/server/stop`, { method: 'POST' })
+        // 后端会优雅退出。window.close() 在大多数浏览器无效，
+        // 改为显示提示，让用户手动关闭 tab。
+        alert('服务器已停止。请刷新页面或手动关闭此标签页。')
+      } catch {
+        alert('服务器已停止。请刷新页面或手动关闭此标签页。')
+      }
+    }
+  }
+
+  const handlePossessSend = useCallback((message: string) => {
+    if (!possessAgent) return
+    setPossessTurns(prev => [...prev, { role: 'user', text: message, ts: Date.now() }])
+    setPossessPending(true)
+    wsSend({
+      type: 'possess_message',
+      agent_id: possessAgent.id,
+      message,
+    })
+  }, [possessAgent, wsSend])
+
+  const handlePossessRelease = () => {
+    setPossessAgent(null)
+    setPossessTurns([])
+    setPossessPending(false)
+    wsSend({ type: 'release', agent_id: possessAgent?.id })
+  }
+
   useEffect(() => {
-    dialogueEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const el = dialogueScrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
   }, [dialogues])
+
+  const renderMainContent = () => {
+    switch (viewMode) {
+      case 'dashboard':
+        return <Dashboard agents={agents} onCreateAgent={createAgent} worldState={worldState} onCreateWorld={createWorld} onStartWorld={startWorld} />
+      case 'agents':
+        return <AgentsView agents={agents} selectedAgent={selectedAgent} onSelectAgent={setSelectedAgent} />
+      case 'dialogue':
+        return <DialogueView dialogues={dialogues} agents={agents} onStartDialogue={startDialogue} scrollRef={dialogueScrollRef} />
+      case 'soul':
+        return <SoulView agent={selectedAgent} />
+      case 'diary':
+        return (
+          <DiaryView
+            agents={agents}
+            selectedAgent={selectedAgent?.id || ''}
+            onSelectAgent={(id) => setSelectedAgent(agents.find(a => a.id === id) || null)}
+            memories={diaryMemories}
+            setMemories={setDiaryMemories}
+          />
+        )
+      case 'timeline':
+        return <TimelineView events={timelineEvents} setEvents={setTimelineEvents} />
+      case 'map':
+        return (
+          <MapCanvas
+            agents={agents}
+            locations={worldState?.locations ?? []}
+            onAgentClick={(id) => {
+              const agent = agents.find(a => a.id === id)
+              if (agent) setSelectedAgent(agent)
+            }}
+          />
+        )
+      case 'possess':
+        return (
+          <PossessMode
+            agent={possessAgent}
+            onSend={handlePossessSend}
+            onRelease={handlePossessRelease}
+            turns={possessTurns}
+            pending={possessPending}
+          />
+        )
+      case 'worldsmith':
+        return <Worldsmith onApplyToEngine={handleApplyToEngine} />
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="app-container">
       {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.logo}>
-          <h1>🏛️ Athenaeum</h1>
-          <span style={styles.version}>V0.7 灵魂增强版</span>
+      <header className="app-header">
+        <div className="app-logo">
+          <h1>{T.app.title}</h1>
+          <span className="version">{T.app.version}</span>
         </div>
-        <nav style={styles.nav}>
-          <button style={{...styles.navBtn, ...(viewMode === 'dashboard' ? styles.navBtnActive : {})}} onClick={() => setViewMode('dashboard')}>概览</button>
-          <button style={{...styles.navBtn, ...(viewMode === 'agents' ? styles.navBtnActive : {})}} onClick={() => setViewMode('agents')}>角色</button>
-          <button style={{...styles.navBtn, ...(viewMode === 'dialogue' ? styles.navBtnActive : {})}} onClick={() => setViewMode('dialogue')}>对话</button>
-          <button style={{...styles.navBtn, ...(viewMode === 'soul' ? styles.navBtnActive : {})}} onClick={() => setViewMode('soul')}>灵魂</button>
+        <nav className="app-nav">
+          <button className={`nav-btn ${viewMode === 'dashboard' ? 'active' : ''}`} onClick={() => setViewMode('dashboard')}>{T.tabs.dashboard}</button>
+          <button className={`nav-btn ${viewMode === 'agents' ? 'active' : ''}`} onClick={() => setViewMode('agents')}>{T.tabs.agents}</button>
+          <button className={`nav-btn ${viewMode === 'dialogue' ? 'active' : ''}`} onClick={() => setViewMode('dialogue')}>{T.tabs.dialogue}</button>
+          <button className={`nav-btn ${viewMode === 'soul' ? 'active' : ''}`} onClick={() => setViewMode('soul')}>{T.tabs.soul}</button>
+          <button className={`nav-btn ${viewMode === 'worldsmith' ? 'active' : ''}`} onClick={() => setViewMode('worldsmith')}>{T.tabs.worldsmith}</button>
+          <button className={`nav-btn ${viewMode === 'diary' ? 'active' : ''}`} onClick={() => setViewMode('diary')}>{T.tabs.diary}</button>
+          <button className={`nav-btn ${viewMode === 'timeline' ? 'active' : ''}`} onClick={() => setViewMode('timeline')}>{T.tabs.timeline}</button>
+          <button className={`nav-btn ${viewMode === 'map' ? 'active' : ''}`} onClick={() => setViewMode('map')}>{T.tabs.map}</button>
+          <button className={`nav-btn ${viewMode === 'possess' ? 'active' : ''}`} onClick={() => setViewMode('possess')}>{T.tabs.possess}</button>
         </nav>
-        <div style={styles.status}>
-          <span style={{...styles.statusDot, background: connected ? '#4ade80' : '#ef4444'}} />
-          {connected ? '已连接' : '未连接'}
+        <div className="app-status">
+          <span className={`status-dot ${connected ? 'connected' : 'disconnected'}`} />
+          {connected ? T.app.statusConnected : T.app.statusDisconnected}
         </div>
       </header>
 
+      {/* TopBar */}
+      <TopBar
+        gameHour={worldState?.time?.game_hour ?? 8}
+        timeOfDay={worldState?.time?.time_of_day ?? 'morning'}
+        weather={worldState?.weather ?? 'clear'}
+        tickId={worldState?.tick_id ?? 0}
+        tickType={worldState?.tick_type ?? 'SILENT'}
+        routerStats={routerStats}
+      />
+
+      {/* RoleCards */}
+      {viewMode !== 'dashboard' && viewMode !== 'possess' && (
+        <RoleCards
+          agents={agents}
+          selectedAgent={selectedAgent?.id ?? null}
+          onSelectAgent={(id) => setSelectedAgent(agents.find(a => a.id === id) || null)}
+          onDiaryClick={(id) => {
+            const agent = agents.find(a => a.id === id)
+            if (agent) {
+              setSelectedAgent(agent)
+              setPossessAgent(agent)
+              setViewMode('possess')
+            }
+          }}
+          style={{ height: '160px' }}
+        />
+      )}
+
       {/* Main Content */}
-      <main style={styles.main}>
-        {viewMode === 'dashboard' && (
-          <Dashboard
-            worldState={worldState}
-            agents={agents}
-            onCreateWorld={createWorld}
-            onStartWorld={startWorld}
-            onCreateAgent={createAgent}
-          />
-        )}
-        {viewMode === 'agents' && (
-          <AgentsView
-            agents={agents}
-            selectedAgent={selectedAgent}
-            onSelectAgent={setSelectedAgent}
-            onCreateAgent={createAgent}
-          />
-        )}
-        {viewMode === 'dialogue' && (
-          <DialogueView
-            dialogues={dialogues}
-            agents={agents}
-            onStartDialogue={startDialogue}
-          />
-        )}
-        {viewMode === 'soul' && (
-          <SoulView agent={selectedAgent} />
-        )}
+      <main className="app-main">
+        <ErrorBoundary>
+          {renderMainContent()}
+        </ErrorBoundary>
       </main>
+
+      {/* ControlBar */}
+      <ControlBar
+        connectionState={connected ? 'connected' : 'disconnected'}
+        paused={paused}
+        tickId={worldState?.tick_id ?? 0}
+        gameHour={worldState?.time?.game_hour ?? 8}
+        timeOfDay={worldState?.time?.time_of_day ?? 'morning'}
+        weather={worldState?.weather ?? 'clear'}
+        onTogglePause={togglePause}
+        onStop={handleStop}
+        viewMode={viewMode}
+        onViewModeChange={(v) => setViewMode(v as ViewMode)}
+      />
     </div>
   )
 }
 
-function Dashboard({ worldState, agents, onCreateWorld, onStartWorld, onCreateAgent }: any) {
-  const [newAgent, setNewAgent] = useState({ name: '', occupation: '', location: '图书馆' })
+// ==================== 子视图组件 ====================
+// 已迁移至 src/views/{Dashboard,AgentsView,DialogueView,SoulView}.tsx
 
+function App() {
   return (
-    <div style={styles.dashboard}>
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>世界状态</h3>
-        <div style={styles.statGrid}>
-          <div style={styles.stat}>
-            <span style={styles.statValue}>{worldState?.tick_id || 0}</span>
-            <span style={styles.statLabel}>Tick</span>
-          </div>
-          <div style={styles.stat}>
-            <span style={styles.statValue}>{worldState?.time_of_day || '--'}</span>
-            <span style={styles.statLabel}>时间</span>
-          </div>
-          <div style={styles.stat}>
-            <span style={styles.statValue}>{agents.length}</span>
-            <span style={styles.statLabel}>角色数</span>
-          </div>
-          <div style={styles.stat}>
-            <span style={styles.statValue}>{worldState?.locations?.length || 0}</span>
-            <span style={styles.statLabel}>地点</span>
-          </div>
-        </div>
-        <div style={styles.actions}>
-          <button style={styles.btn} onClick={onCreateWorld}>创建世界</button>
-          <button style={styles.btnPrimary} onClick={onStartWorld}>启动世界</button>
-        </div>
-      </div>
-
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>创建角色</h3>
-        <input style={styles.input} placeholder="角色名" value={newAgent.name} onChange={e => setNewAgent({...newAgent, name: e.target.value})} />
-        <input style={styles.input} placeholder="职业" value={newAgent.occupation} onChange={e => setNewAgent({...newAgent, occupation: e.target.value})} />
-        <select style={styles.select} value={newAgent.location} onChange={e => setNewAgent({...newAgent, location: e.target.value})}>
-          <option value="图书馆">图书馆</option>
-          <option value="咖啡厅">咖啡厅</option>
-          <option value="公园">公园</option>
-        </select>
-        <button style={styles.btn} onClick={() => { onCreateAgent(newAgent.name, newAgent.occupation, newAgent.location); setNewAgent({name: '', occupation: '', location: '图书馆'}) }}>添加角色</button>
-      </div>
-
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>活跃角色</h3>
-        <div style={styles.agentList}>
-          {agents.map((agent: Agent) => (
-            <div key={agent.id} style={styles.agentItem}>
-              <span style={styles.agentName}>{agent.name}</span>
-              <span style={styles.agentLoc}>{agent.location}</span>
-            </div>
-          ))}
-          {agents.length === 0 && <p style={styles.empty}>暂无角色</p>}
-        </div>
-      </div>
-    </div>
+    <WorldProvider>
+      <AppContent />
+    </WorldProvider>
   )
-}
-
-function AgentsView({ agents, selectedAgent, onSelectAgent, onCreateAgent }: any) {
-  return (
-    <div style={styles.agentsView}>
-      <div style={styles.agentListPanel}>
-        <h3 style={styles.cardTitle}>角色列表</h3>
-        {agents.map((agent: Agent) => (
-          <div key={agent.id} style={{...styles.agentCard, ...(selectedAgent?.id === agent.id ? styles.agentCardSelected : {})}} onClick={() => onSelectAgent(agent)}>
-            <div style={styles.agentCardName}>{agent.name}</div>
-            <div style={styles.agentCardInfo}>{agent.occupation || '未知职业'} · {agent.location}</div>
-          </div>
-        ))}
-      </div>
-      <div style={styles.agentDetail}>
-        {selectedAgent ? (
-          <>
-            <h2 style={styles.detailName}>{selectedAgent.name}</h2>
-            <p style={styles.detailOccupation}>{selectedAgent.occupation}</p>
-            <div style={styles.detailSection}>
-              <h4 style={styles.detailSectionTitle}>情绪状态</h4>
-              <p>{selectedAgent.emotion_state?.label || 'neutral'} (效价: {selectedAgent.emotion_state?.valence?.toFixed(2) || '0.00'}, 唤醒: {selectedAgent.emotion_state?.arousal?.toFixed(2) || '0.00'})</p>
-            </div>
-            <div style={styles.detailSection}>
-              <h4 style={styles.detailSectionTitle}>当前目标</h4>
-              <p>{selectedAgent.active_goal || '无特定目标'}</p>
-              {selectedAgent.goal_progress !== undefined && <p>进度: {(selectedAgent.goal_progress * 100).toFixed(0)}%</p>}
-            </div>
-            <div style={styles.detailSection}>
-              <h4 style={styles.detailSectionTitle}>性格</h4>
-              {selectedAgent.personality && Object.entries(selectedAgent.personality).map(([k, v]) => (
-                <span key={k} style={styles.personalityTag}>{k}: {(v as number).toFixed(1)}</span>
-              ))}
-            </div>
-          </>
-        ) : (
-          <p style={styles.empty}>选择角色查看详情</p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function DialogueView({ dialogues, agents, onStartDialogue }: any) {
-  const [agentA, setAgentA] = useState('')
-  const [agentB, setAgentB] = useState('')
-
-  return (
-    <div style={styles.dialogueView}>
-      <div style={styles.dialogueControls}>
-        <select style={styles.select} value={agentA} onChange={e => setAgentA(e.target.value)}>
-          <option value="">选择角色 A</option>
-          {agents.map((a: Agent) => <option key={a.id} value={a.id}>{a.name}</option>)}
-        </select>
-        <span>与</span>
-        <select style={styles.select} value={agentB} onChange={e => setAgentB(e.target.value)}>
-          <option value="">选择角色 B</option>
-          {agents.map((a: Agent) => <option key={a.id} value={a.id}>{a.name}</option>)}
-        </select>
-        <button style={styles.btnPrimary} onClick={() => { if (agentA && agentB) onStartDialogue(agentA, agentB) }}>开始对话</button>
-      </div>
-      <div style={styles.dialogueLog}>
-        {dialogues.map((d: DialogueEntry, i: number) => (
-          <div key={i} style={styles.dialogueEntry}>
-            <span style={styles.dialogueFrom}>{d.from}:</span>
-            <span style={styles.dialogueText}>"{d.utterance}"</span>
-            {d.micro_action && <span style={styles.microAction}>*{d.micro_action}*</span>}
-          </div>
-        ))}
-        <div ref={dialogueEndRef} />
-      </div>
-    </div>
-  )
-}
-
-function SoulView({ agent }: { agent: Agent | null }) {
-  if (!agent) return <p style={styles.empty}>选择角色查看灵魂配置</p>
-
-  return (
-    <div style={styles.soulView}>
-      <h2 style={styles.detailName}>{agent.name} 的灵魂</h2>
-      <div style={styles.card}>
-        <h4 style={styles.cardTitle}>核心欲望</h4>
-        {agent.soul?.core_desires?.map((d, i) => (
-          <div key={i} style={styles.desireItem}>
-            <span>{d.name}</span>
-            <div style={styles.desireBar}><div style={{...styles.desireFill, width: `${d.level * 100}%`}} /></div>
-          </div>
-        ))}
-      </div>
-      <div style={styles.card}>
-        <h4 style={styles.cardTitle}>内在矛盾</h4>
-        <p>{agent.soul?.inner_conflict?.description || '暂无矛盾描述'}</p>
-      </div>
-      <div style={styles.card}>
-        <h4 style={styles.cardTitle}>潜意识规则</h4>
-        {agent.soul?.subconscious_rules?.map((r, i) => (
-          <div key={i} style={styles.ruleItem}>
-            <span style={styles.ruleTrigger}>"{r.trigger}"</span>
-            <span>→ {r.action}</span>
-          </div>
-        ))}
-        {(!agent.soul?.subconscious_rules || agent.soul.subconscious_rules.length === 0) && <p>无潜意识规则</p>}
-      </div>
-    </div>
-  )
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  header: { display: 'flex', alignItems: 'center', padding: '12px 24px', background: '#1a1a2e', borderBottom: '1px solid #333', gap: '24px' },
-  logo: { display: 'flex', alignItems: 'center', gap: '12px' },
-  version: { fontSize: '12px', color: '#888' },
-  nav: { display: 'flex', gap: '4px', flex: 1 },
-  navBtn: { padding: '8px 16px', background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', borderRadius: '6px' },
-  navBtnActive: { background: '#3b82f6', color: '#fff' },
-  status: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#888' },
-  statusDot: { width: '8px', height: '8px', borderRadius: '50%' },
-  main: { flex: 1, padding: '24px', overflow: 'auto' },
-  dashboard: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' },
-  card: { background: '#1e1e2e', borderRadius: '12px', padding: '20px', border: '1px solid #333' },
-  cardTitle: { fontSize: '14px', color: '#888', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '1px' },
-  statGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '16px' },
-  stat: { textAlign: 'center' },
-  statValue: { display: 'block', fontSize: '28px', fontWeight: 'bold', color: '#3b82f6' },
-  statLabel: { fontSize: '12px', color: '#666' },
-  actions: { display: 'flex', gap: '8px' },
-  btn: { padding: '10px 20px', background: '#333', border: 'none', color: '#fff', borderRadius: '8px', cursor: 'pointer', flex: 1 },
-  btnPrimary: { padding: '10px 20px', background: '#3b82f6', border: 'none', color: '#fff', borderRadius: '8px', cursor: 'pointer', flex: 1 },
-  input: { width: '100%', padding: '10px', background: '#2a2a3a', border: '1px solid #444', borderRadius: '6px', color: '#fff', marginBottom: '8px' },
-  select: { width: '100%', padding: '10px', background: '#2a2a3a', border: '1px solid #444', borderRadius: '6px', color: '#fff', marginBottom: '8px' },
-  agentList: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  agentItem: { display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#2a2a3a', borderRadius: '6px' },
-  agentName: { fontWeight: 'bold' },
-  agentLoc: { color: '#888', fontSize: '14px' },
-  empty: { color: '#666', fontStyle: 'italic', padding: '20px', textAlign: 'center' },
-  agentsView: { display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px', height: 'calc(100vh - 150px)' },
-  agentListPanel: { background: '#1e1e2e', borderRadius: '12px', padding: '16px', overflow: 'auto' },
-  agentCard: { padding: '12px', background: '#2a2a3a', borderRadius: '8px', marginBottom: '8px', cursor: 'pointer', border: '2px solid transparent' },
-  agentCardSelected: { borderColor: '#3b82f6' },
-  agentCardName: { fontWeight: 'bold', marginBottom: '4px' },
-  agentCardInfo: { fontSize: '12px', color: '#888' },
-  agentDetail: { background: '#1e1e2e', borderRadius: '12px', padding: '24px', overflow: 'auto' },
-  detailName: { fontSize: '24px', marginBottom: '4px' },
-  detailOccupation: { color: '#888', marginBottom: '20px' },
-  detailSection: { marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #333' },
-  detailSectionTitle: { fontSize: '12px', color: '#666', textTransform: 'uppercase', marginBottom: '8px' },
-  personalityTag: { display: 'inline-block', padding: '4px 8px', background: '#333', borderRadius: '4px', fontSize: '12px', marginRight: '4px', marginBottom: '4px' },
-  dialogueView: { display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)' },
-  dialogueControls: { display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px', padding: '16px', background: '#1e1e2e', borderRadius: '12px' },
-  dialogueLog: { flex: 1, background: '#1e1e2e', borderRadius: '12px', padding: '16px', overflow: 'auto' },
-  dialogueEntry: { padding: '8px 0', borderBottom: '1px solid #2a2a3a' },
-  dialogueFrom: { fontWeight: 'bold', color: '#3b82f6', marginRight: '8px' },
-  dialogueText: { color: '#eee' },
-  microAction: { display: 'block', fontStyle: 'italic', color: '#888', fontSize: '14px', marginTop: '4px' },
-  soulView: { maxWidth: '800px' },
-  desireItem: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' },
-  desireBar: { flex: 1, height: '8px', background: '#333', borderRadius: '4px' },
-  desireFill: { height: '100%', background: '#3b82f6', borderRadius: '4px', transition: 'width 0.3s' },
-  ruleItem: { padding: '8px', background: '#2a2a3a', borderRadius: '6px', marginBottom: '6px' },
-  ruleTrigger: { color: '#f59e0b', fontWeight: 'bold' },
 }
 
 export default App

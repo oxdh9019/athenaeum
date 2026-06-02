@@ -319,11 +319,26 @@ async def health():
     await asyncio.gather(probe_local(), probe_cloud())
 
     any_ok = local_ok or cloud_ok
+    # V0.7 Phase C3.2: 组件级健康信息 (不阻塞 status, 仅观察用)
+    component_info: dict = {}
+    if s.world is not None:
+        component_info["agents"] = len(getattr(s.world, '_agent_registry', {}) or {})
+        component_info["world_session"] = getattr(s.world, '_world_session_id', 'unknown')
+        component_info["engine_running"] = bool(s.engine_running)
+    else:
+        component_info["agents"] = 0
+        component_info["world_session"] = None
+        component_info["engine_running"] = False
+    component_info["dialogue_mgr"] = "ok" if s.dialogue_mgr is not None else "missing"
+    component_info["memory_archiver"] = "ok" if s.memory_archiver is not None else "missing"
+    component_info["memory_retriever"] = "ok" if s.memory_retriever is not None else "missing"
+
     body = {
         "status": "healthy" if any_ok else "degraded",
         "version": "0.7",
         "local_llm": "up" if local_ok else "down",
         "cloud_llm": "up" if cloud_ok else ("not_configured" if s.llm is None or not s.llm._api_key else "down"),
+        "components": component_info,
     }
     if not any_ok:
         return JSONResponse(status_code=503, content=body)

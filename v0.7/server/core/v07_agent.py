@@ -384,46 +384,15 @@ class V07Agent:
         memory_context: list[dict],
         recall_section: str = "",
     ) -> str:
-        loc = self._current_location or "未知"
-        time_desc = env_state.get("time_of_day", "unknown")
-        weather = env_state.get("weather", "unknown")
-        neighbor_desc = ", ".join(neighbors) if neighbors else "无"
+        from prompts.behavior_decision import format_behavior_prompt
 
-        # 短期记忆文本
-        memory_text = ""
-        if memory_context:
-            memory_lines = [f"- {m['role']}: {m['content']}" for m in memory_context[-5:]]
-            memory_text = "\n最近记忆:\n" + "\n".join(memory_lines)
-
-        # V0.7: 目标状态
         goal_state = self._goal_manager.get_current_intent()
-
-        # V0.7: 日程状态
         current_activity = self._daily_planner.get_current_activity()
         activity_desc = current_activity.description if current_activity else "例行活动"
-
-        # V0.7: 情绪状态
         emotion_state = self._emotion_model.get_state()
-
-        # V0.7: 情绪行为引导
         emotion_label = emotion_state.get('label', 'neutral')
-        if emotion_label == 'anxious':
-            emotion_behavior_guide = "你当前感到焦虑，倾向于谨慎行动，避免冒险"
-        elif emotion_label == 'happy':
-            emotion_behavior_guide = "你心情愉快，更愿意主动社交和尝试新事物"
-        elif emotion_label == 'sad':
-            emotion_behavior_guide = "你情绪低落，可能更倾向于独处和安静的活动"
-        elif emotion_label == 'content':
-            emotion_behavior_guide = "你感到满足，倾向于维持现状，保持平稳的行动节奏"
-        elif emotion_label == 'curious':
-            emotion_behavior_guide = "你充满好奇心，渴望探索新事物"
-        else:
-            emotion_behavior_guide = "你目前情绪平稳，行动理性"
-
-        # V0.7: 行动风格
         action_style = self._personality_filter.get_action_style()
 
-        # V0.7: 目标截止压力
         goal_deadline_info = ""
         if self._goal_manager.active_goal:
             deadline = self._goal_manager.active_goal.deadline_tick
@@ -431,33 +400,21 @@ class V07Agent:
                 ticks_left = deadline - getattr(self._world, '_tick_id', 0)
                 goal_deadline_info = f"\n目标截止: 还有 {ticks_left} Tick"
 
-        return f"""你是 {self._name}，目前在 {loc}。
-
-时间: {time_desc} | 天气: {weather}
-附近的人: {neighbor_desc}
-
-{memory_text}
-{recall_section}
-
-=== V0.7 角色状态 ===
-
-当前目标: {goal_state.get('active_goal', '无特定目标')}
-目标类型: {goal_state.get('goal_type', 'maintenance')}
-目标进度: {goal_state.get('goal_progress', 0):.0%}
-目标优先级: {goal_state.get('goal_priority', 0):.1f}
-{goal_deadline_info}
-
-当前日程: {activity_desc}
-
-情绪状态: {emotion_label} (效价={emotion_state.get('valence', 0):.2f}, 唤醒={emotion_state.get('arousal', 0):.2f})
-行为引导: {emotion_behavior_guide}
-
-行动风格: {action_style.get('style_description', '行为稳定')}
-
-请决定下一步行动。输出JSON格式：
-{{"action_type": "move|dialogue|wait|observe|idle", "target": "位置名或角色ID或null", "urgency": 0.5, "reasoning": "为什么想这样做"}}
-
-只输出JSON，不要其他内容。"""
+        return format_behavior_prompt(
+            name=self._name,
+            location=self._current_location or "未知",
+            time_of_day=env_state.get("time_of_day", "unknown"),
+            weather=env_state.get("weather", "unknown"),
+            neighbors=neighbors,
+            memory_context=memory_context,
+            recall_section=recall_section or "",
+            goal_state=goal_state,
+            goal_deadline=goal_deadline_info,
+            activity_desc=activity_desc,
+            emotion_label=emotion_label,
+            emotion_state=emotion_state,
+            action_style_desc=action_style.get('style_description', '行为稳定'),
+        )
 
     def _parse_intent(self, response: str) -> Optional[dict]:
         from utils.llm_parsing import parse_llm_json

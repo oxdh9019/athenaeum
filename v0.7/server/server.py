@@ -149,6 +149,30 @@ async def lifespan(app: FastAPI):
     )
     world.set_dialogue_manager(dialogue_mgr)
 
+    # V0.7 Phase D B: 集成 V0.6 叙事引擎 (4 个 setter)
+    # 评估报告 5/24 P0 #11: v0.6 组件代码存在但未集成到 tick 循环
+    # 修复: 启动时 wire 4 个组件, 之后 tick 自动驱动
+    from core.collective_mood import CollectiveMood
+    from core.opportunity_detector import OpportunityDetector
+    from core.narrative_injector import NarrativeInjector
+    from core.world_will import WorldWill
+
+    world_will = WorldWill()
+    world.set_world_will(world_will)
+    world.set_collective_mood(CollectiveMood(world))
+    world.set_opportunity_detector(
+        OpportunityDetector(world, world._collective_mood)
+    )
+    world.set_narrative_injector(
+        NarrativeInjector(
+            world=world,
+            cloud_llm=cloud_llm,
+            local_llm=local_llm,
+            world_will=world_will,
+        )
+    )
+    logger.info("V0.6 叙事引擎已集成 (CollectiveMood/OpportunityDetector/NarrativeInjector/WorldWill)")
+
     memory_archiver = MemoryArchiver(
         cloud_llm=cloud_llm,
         local_llm=local_llm,

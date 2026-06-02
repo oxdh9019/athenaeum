@@ -49,13 +49,18 @@ class NarrativeInjector:
     def __init__(
         self,
         world,
-        cloud_llm,
+        cloud_llm=None,
+        local_llm=None,
         tension_threshold: float = 0.3,
         window_ticks: int = 10,
         world_will=None,
     ):
         self._world = world
-        self._cloud = cloud_llm
+        # V0.7 Phase D B: 优先级 cloud > local > None
+        # 旧版 cloud_llm 必传, 本地模式 (USE_OLLAMA=1) 下会走默认描述 fallback
+        # (功能弱, 角色看不到叙事事件), 现在允许任一
+        self._cloud = cloud_llm or local_llm
+        self._local_llm = local_llm
         self._tension_threshold = tension_threshold
         self._window_ticks = window_ticks
         self._tick_events: list[dict] = []  # 每Tick的统计数据

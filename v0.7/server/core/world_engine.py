@@ -154,6 +154,9 @@ class WorldEngine:
 
         # 持有对话 task 引用，防止 asyncio.create_task 的弱引用被 GC 回收
         self._dialogue_tasks: set = set()
+        # V0.7 Phase C2.5: WS 广播 task 同样持强引用 + done callback 清理
+        # 否则 _broadcast_ws 的 create_task 可能被 GC, 广播丢失
+        self._ws_tasks: set = set()
 
     @property
     def agent_names(self) -> dict[str, str]:
@@ -261,8 +264,13 @@ class WorldEngine:
         """内部广播方法（供 NarrativeInjector 调用）"""
         if self._ws_broadcast_fn:
             try:
+                # V0.7 Phase C2.5: 持强引用 + done callback 清理
+                # 之前直接 asyncio.create_task 不持引用, 可能在 event loop
+                # 调度前被 GC, 造成广播丢失
                 import asyncio
-                asyncio.create_task(self._ws_broadcast_fn(payload))
+                task = asyncio.create_task(self._ws_broadcast_fn(payload))
+                self._ws_tasks.add(task)
+                task.add_done_callback(self._ws_tasks.discard)
             except Exception:
                 pass
 

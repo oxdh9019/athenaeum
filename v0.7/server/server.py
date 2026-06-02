@@ -35,6 +35,7 @@ from core.memory_archiver import MemoryArchiver
 from core.memory_retriever import MemoryRetriever
 from core.forgetting_curve import ForgettingCurve
 from core.model_router import create_default_router
+from core.timeline_service import TimelineService
 from utils.llm_parsing import inject_guard, parse_llm_json
 
 logging.basicConfig(level=logging.INFO)
@@ -57,6 +58,7 @@ class AppState:
     model_router: object = None  # ModelRouter 实例（用于成本统计）
     agent_forgetting_curves: dict[str, ForgettingCurve] = field(default_factory=dict)
     llm_budget: object = None  # LLMBudget 实例（per-tick 限流）
+    timeline_service: Optional[TimelineService] = None  # Phase B Step 2: timeline + journal 查询层
 
     engine_running: bool = False
     tick_task: Optional[asyncio.Task] = None
@@ -160,6 +162,12 @@ async def lifespan(app: FastAPI):
         chroma_client=None,
     )
 
+    # V0.7 Phase B Step 2: timeline / journal 查询服务
+    timeline_service = TimelineService(
+        world=world,
+        memory_archiver=memory_archiver,
+    )
+
     state = AppState(
         world=world,
         llm=cloud_llm,
@@ -169,6 +177,7 @@ async def lifespan(app: FastAPI):
         memory_retriever=memory_retriever,
         model_router=model_router,
         llm_budget=llm_budget,
+        timeline_service=timeline_service,
     )
     app.state.app = state
 
@@ -744,6 +753,69 @@ async def get_world_state():
         ],
         "session_id": getattr(s.world, '_world_session_id', None),
     }
+
+
+@ app.get("/world/timeline")
+async def get_world_timeline(
+    event_type: Optional[str] = None,
+    page: int = 1,
+    size: int = 20,
+):
+    """
+    V0.7 Phase B Step 2: 世界时间线查询
+
+    聚合 _recent_dialogues + _recent_actions,按 tick 倒序分页。
+
+    Query params:
+        event_type: 过滤 (dialogue / action),缺省 = 全部
+        page: 1-based 页码,默认 1
+        size: 每页条数,默认 20,最大 200
+    """
+    s = get_state()
+    if s.timeline_service is None:
+        return {"events": [], "total": 0, "page": 1, "size": size, "source": "uninitialized"}
+    return s.timeline_service.query_timeline(
+        event_type=event_type,
+        page=page,
+        size=size,
+    )
+
+
+@ app.get("/agent/{agent_id}/journal")
+async def get_agent_journal(
+    agent_id: str,
+    page: int = 1,
+    size: int = 10,
+):
+    """
+    V0.7 Phase B Step 2: 角色日记查询
+
+    优先读 MemoryArchiver 归档(archiver_fallback/{session}/{agent}_*.json);
+    没有任何归档时,回退到该 agent 参与的最近对话合成"近期条目"。
+
+    Query params:
+        page: 1-based 页码,默认 1
+        size: 每页条数,默认 10,最大 200
+
+    Response:
+        {
+          "memories": [{memory_id, content, emotion, importance, tick_created, is_core, context}],
+          "total": int,
+          "page": int,
+          "size": int,
+          "source": "archive" | "synthesized" | "empty"
+        }
+    """
+    s = get_state()
+    if s.timeline_service is None:
+        return {"memories": [], "total": 0, "page": 1, "size": size, "source": "uninitialized"}
+    if not agent_id or not agent_id.strip():
+        raise HTTPException(status_code=400, detail="agent_id 不能为空")
+    return s.timeline_service.query_journal(
+        agent_id=agent_id,
+        page=page,
+        size=size,
+    )
 
 
 @ app.post("/server/stop")

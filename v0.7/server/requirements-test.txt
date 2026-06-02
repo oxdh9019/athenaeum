@@ -1,0 +1,9 @@
+# V0.7 测试依赖
+# 运行：pip install -r requirements.txt -r requirements-test.txt
+# 用法：python tests/test_v07_soul_system.py
+# 当前项目无 pytest 配置，所有测试以 plain script 形式存在；
+# pytest 仅在编写 v0.7/server/core/test_*.py 风格的脚本时使用。
+pytest>=7.0
+pytest-asyncio>=0.21
+pytest-cov>=4.0
+

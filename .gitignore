@@ -18,3 +18,11 @@ Thumbs.db
 # Project specific
 .副本/
 temp/
+
+# Chroma 本地测试数据（开发期生成的 chroma.sqlite3 及 collection 目录）
+**/chroma_test/
+**/chroma_data/
+**/archiver_fallback/
+**/playwright-report/
+**/test-results/
+**/dist/

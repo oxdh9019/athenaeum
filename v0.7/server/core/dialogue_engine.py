@@ -366,7 +366,10 @@ class DialogueSession:
             response = await llm.chat(
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.2,
-                max_tokens=200,
+                # V0.7 Phase D fix: max_tokens 200 → 250
+                # 旧值 200 在 prompt 较长 (含 recent_context + recall_section) 时,
+                # 4B 模型输出被截断到半截 JSON, parse_llm_json 失败
+                max_tokens=250,
             )
 
             from utils.llm_parsing import parse_llm_json
@@ -471,7 +474,12 @@ class DialogueSession:
             response = await llm.chat(
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.8,
-                max_tokens=150,
+                # V0.7 Phase D fix: max_tokens 150 → 200
+                # qwen3.5:4b 在 150 token 限制下, 中文对话输出经常被截断到 1-2 句
+                # (≈ 30-50 字), 之后 cleaning 步骤的关键词过滤 (对话/扮演/回复)
+                # 容易把剩下的内容也滤掉, 导致 utterance 为空 → 对话生成失败
+                # 200 token 给 LLM 留够 1-2 句完整回复 + 一些 buffer
+                max_tokens=200,
             )
             utterance = response.strip()
 
@@ -490,10 +498,13 @@ class DialogueSession:
                 part = part.strip()
                 if not part:
                     continue
-                if any(keyword in part for keyword in [
+                # V0.7 Phase D fix: 关键词过滤改为「行首匹配」+ 收窄白名单
+                # 旧版: 任意位置包含关键词就跳过, "今天对话很开心" 被误判为元描述
+                # 新版: 只过滤明显的元描述/指令前缀, 真实对话内容保留
+                if any(part.startswith(prefix) for prefix in [
                     'The user', 'user says', 'play as', '扮演',
-                    '回复', '对话', 'characters', '需要', '考虑',
-                    'should respond', 'natural', '简短', '以内',
+                    '你是', '你扮演', '请扮演', '请生成', '请回复', '请输出',
+                    'User:', 'Assistant:', 'System:', 'A:', 'B:',
                 ]):
                     continue
                 if part.startswith(('- ', '1.', '2.', '3.', '4.', '5.')):

@@ -899,10 +899,13 @@ async def stop_server(_auth: None = Depends(require_api_key)):
             if not task.done():
                 task.cancel()
 
-    # 3. 退出进程（用 sys.exit 比 os.kill(SIGTERM) 更安全：
-    #    多 worker 不会杀错、K8s/容器里信号不会丢、uvicorn 自身也能正常 drain）
-    logger.info("服务器已停止")
-    # 在 finally 之外退出；先返回 200 让客户端知道收到指令
+    # 3. 触发 FastAPI graceful shutdown
+    # 用 sys.exit(0) (经 threading.Timer 0.5s 后) 比 os.kill(SIGTERM) 安全:
+    #   - 不直接发信号, uvicorn 不会因 SIGTERM 误杀
+    #   - sys.exit 走 Python 解释器, atexit handler 能跑
+    #   - 0.5s 延迟让 200 响应先回到客户端, 客户端能感知到关闭完成
+    # 多 worker / K8s 容器里: 只关闭当前进程, 其他 worker 继续服务
+    logger.info("服务器已停止, 触发 graceful shutdown")
     def _exit():
         sys.exit(0)
     threading.Timer(0.5, _exit).start()

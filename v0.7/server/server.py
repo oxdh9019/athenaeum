@@ -547,22 +547,51 @@ async def generate_full_world(req: WorldGenerateRequest, _auth: None = Depends(r
 
 只返回 JSON，不要其他内容。"""
 
-    try:
-        response = await llm.chat(
-            messages=[{"role": "user", "content": prompt}],
-            system="你是一个世界构建专家，生成详细、有趣的虚构世界和角色。",
-            temperature=0.8,
-            max_tokens=4000,
-        )
+    # V0.7 Phase D C1: 重试 3 次 + 渐进温度
+    # 旧版 1 次失败就直接 {"error": ...}, 用户在工坊看到 raw 输出无法修复
+    # 经验: qwen3.5:4b 在 4000 token 长输出下 JSON 解析失败率约 20-30%,
+    # 但同一 prompt 重试第二次成功率高 (温度变化让 LLM 输出结构更稳)
+    # 失败 3 次后才放弃, 每次递增 temperature (0.5 → 0.7 → 0.9)
+    max_attempts = 3
+    base_temp = 0.5
+    last_error = None
+    last_raw = ""
 
-        content = response if isinstance(response, str) else response.content
-        data = parse_llm_json(content)
-        if data is not None:
-            return data
-        return {"error": "生成失败，JSON 解析错误", "raw": content[:500]}
-    except Exception as e:
-        logger.error(f"世界生成失败: {e}")
-        return {"error": str(e)}
+    for attempt in range(1, max_attempts + 1):
+        # 渐进温度, 鼓励 LLM 在第 2/3 次换思路
+        current_temp = base_temp + (attempt - 1) * 0.2
+        try:
+            logger.info(f"[world/generate_full] attempt {attempt}/{max_attempts}, temp={current_temp}")
+            response = await llm.chat(
+                messages=[{"role": "user", "content": prompt}],
+                system="你是一个世界构建专家，生成详细、有趣的虚构世界和角色。",
+                temperature=current_temp,
+                max_tokens=4000,
+            )
+
+            content = response if isinstance(response, str) else response.content
+            data = parse_llm_json(content)
+            if data is not None:
+                if attempt > 1:
+                    logger.info(f"[world/generate_full] 第 {attempt} 次重试成功")
+                return data
+
+            # JSON 解析失败: 记错误, 进重试
+            last_error = "JSON 解析失败"
+            last_raw = content[:500]
+            logger.warning(f"[world/generate_full] attempt {attempt} 解析失败, raw[:200]={content[:200]!r}")
+
+        except Exception as e:
+            last_error = str(e)
+            logger.error(f"[world/generate_full] attempt {attempt} 异常: {e}")
+            # 异常也继续重试 (网络抖动等)
+
+    # 3 次都失败
+    logger.error(f"[world/generate_full] 3 次重试全部失败: {last_error}")
+    return {
+        "error": f"生成失败 (重试 {max_attempts} 次后): {last_error}",
+        "raw": last_raw,
+    }
 
 
 @ app.post("/world/apply")

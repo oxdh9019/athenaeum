@@ -1,0 +1,64 @@
+{
+  "_comment": "V0.7 scattered fixture: 3 agents at 3 distinct locations, designed to exercise movement / encounter / dialogue. Replaces the legacy /tmp/apply_same_loc.json (which forced all agents to start in the same place and masked the movement bug fixed in Phase D P0). Use: load world + 3 agents, then world/start. Expect 1+ encounter within 30s, 1+ dialogue within 60s.",
+  "world": {
+    "name": "scattered",
+    "locations": ["茶馆", "广场", "书店"]
+  },
+  "agents": [
+    {
+      "id": "a1",
+      "name": "林远",
+      "occupation": "画家",
+      "initial_location": "茶馆",
+      "personality": {
+        "openness": 0.7,
+        "conscientiousness": 0.6,
+        "extraversion": 0.4,
+        "agreeableness": 0.6,
+        "neuroticism": 0.3
+      },
+      "soul": {"core_trait": "内省"}
+    },
+    {
+      "id": "a2",
+      "name": "苏青",
+      "occupation": "教师",
+      "initial_location": "广场",
+      "personality": {
+        "openness": 0.6,
+        "conscientiousness": 0.7,
+        "extraversion": 0.6,
+        "agreeableness": 0.7,
+        "neuroticism": 0.3
+      },
+      "soul": {"core_trait": "好奇"}
+    },
+    {
+      "id": "a3",
+      "name": "陈默",
+      "occupation": "医生",
+      "initial_location": "书店",
+      "personality": {
+        "openness": 0.5,
+        "conscientiousness": 0.8,
+        "extraversion": 0.4,
+        "agreeableness": 0.6,
+        "neuroticism": 0.4
+      },
+      "soul": {"core_trait": "沉稳"}
+    }
+  ],
+  "setup_commands": [
+    "curl -s -X POST http://localhost:8000/world/create -H 'Content-Type: application/json' -d @<(jq '.world' < $0)",
+    "for a in $(jq -c '.agents[]' < $0); do curl -s -X POST http://localhost:8000/agent/create -H 'Content-Type: application/json' -d \"$a\"; done",
+    "curl -s -X POST http://localhost:8000/world/start"
+  ],
+  "expected_within_30s": {
+    "movement_events": ">=1 (any agent changes location)",
+    "encounters": ">=0 (probabilistic, 15% / tick / agent)"
+  },
+  "expected_within_60s": {
+    "dialogues": ">=1 (depends on encounter)",
+    "intent_diversity": ">=2 distinct types (greet/ask/share/invite/wait)"
+  }
+}

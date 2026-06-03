@@ -168,6 +168,25 @@ class EmotionModel:
         self._arousal = max(0.0, min(1.0, self._arousal + delta))
         self._label = self.state.label
 
+    def decay(self, factor: float = 0.98) -> None:
+        """V0.7 Phase D P1: 情绪时间衰减。
+
+        没事件时, 情绪应缓慢向中性 (0, 0.3) 漂移 (回家效应)。
+        旧版没衰减, 0 encounter 0 事件的角色永远卡在初始 (0, 0.3),
+        仪表盘看起来"什么都没发生"。
+
+        Args:
+            factor: 衰减系数, 越接近 1 衰减越慢。
+                0.98 = 每 tick 衰减 2%, 50 tick 后约 36% 残留
+                0.95 = 每 tick 衰减 5%, 50 tick 后约 8% 残留
+        """
+        # valence 向 0 拉
+        self._valence *= factor
+        # arousal 向基线 0.3 拉
+        baseline = 0.3
+        self._arousal = baseline + (self._arousal - baseline) * factor
+        self._label = self.state.label
+
     def apply_event(self, event_type: str, event_data: dict = None):
         """
         应用外部事件影响情绪

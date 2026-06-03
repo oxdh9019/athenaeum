@@ -335,6 +335,27 @@ class DialogueSession:
             for d in self.conversation_log[-6:]
         ]) if self.conversation_log else "（暂无历史对话）"
 
+        # V0.7 Phase D P2: 对话死循环检测
+        # 最近 3 轮如果是同一个 speaker 且同一 intent_type 反复出现,
+        # 提示 LLM 强制换意图, 避免 20 轮全 share / 全 greet 的死循环
+        loop_hint = ""
+        if len(self.conversation_log) >= 3:
+            last_three = self.conversation_log[-3:]
+            # 只看本 speaker 的最近 3 条
+            speaker_recent = [d for d in last_three if d.from_agent == speaker_id]
+            if len(speaker_recent) >= 3:
+                # 没有 intent_type 在 DialogueMessage 上, 但我们有 recent_context;
+                # 简单办法: 检查最近 3 轮里 1st 字符 (发言标记) 是否相同
+                # 实际更准的判断: 看 recent_context 是否有重复 pattern,
+                # 简化: 若最近 3 轮长度都很相似 (LLM 在套模板), 提示换话题
+                lens = [len(d.utterance) for d in speaker_recent]
+                if max(lens) - min(lens) < 5 and all(l > 10 for l in lens):
+                    # 最近 3 轮长度几乎一致 → 模板重复
+                    loop_hint = (
+                        "\n\n【P2 提示】对话已连续多轮相似, 建议本轮选择 "
+                        "change_topic 或 ask, 打破模式。"
+                    )
+
         prompt = f"""你是 {speaker_name}（ID: {speaker_id}），正在和 {listener_name} 交谈。
 
 ## 身份信息
@@ -359,6 +380,7 @@ class DialogueSession:
 
 请严格按以下 JSON 格式输出（不要输出任何其他内容）：
 {{"intent_type": "意图类型", "target": "{listener_id}", "reasoning": "你的自然语言内部独白", "urgency": 0.0到1.0之间", "emotion": "warm|anxious|curious|neutral|wary"}}
+{loop_hint}
 """
 
         try:

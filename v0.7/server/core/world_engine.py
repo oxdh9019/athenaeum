@@ -365,6 +365,9 @@ class WorldEngine:
             # 移动
             await self._maybe_move_agents()
 
+            # V0.7 Phase D P1: 情绪衰减
+            await self._decay_emotions()
+
             # 生成动作
             await self._generate_agent_actions()
 
@@ -377,21 +380,51 @@ class WorldEngine:
             return self._get_state()
 
     async def _maybe_move_agents(self):
-        """15%概率随机移动"""
+        """每 tick 15% 概率让每个 agent 随机移动到另一个地点。
+
+        V0.7 Phase D P0 修复: 之前这个函数只检查 same_loc_agents 然后 pass,
+        实际 move_agent() 调用缺失, 导致 100+tick 后角色仍在初始 location,
+        0 encounter, 0 dialogue, 0 emotion 变化。
+
+        现在: 15% 概率 → 选个不同 location → 调 move_agent()。
+        没空间图 (graph connectivity) 时, 简化成"随机选一个不同地点"，
+        3+ 个 location 的世界能在 ~20 tick 内让角色碰面。
+        """
         import random
         for agent_id in list(self._agents.keys()):
-            if self._agent_registry.get(agent_id):
-                if random.random() < 0.15:
-                    current_loc = self._space.current_location(agent_id)
-                    if current_loc:
-                        # 随机移动到相邻地点（简化：随机选择）
-                        same_loc_agents = [
-                            aid for aid, loc in self._space._agent_locations.items()
-                            if loc == current_loc
-                        ]
-                        if len(same_loc_agents) > 1:
-                            # 有其他人在同一地点，可能触发对话
-                            pass
+            agent = self._agent_registry.get(agent_id)
+            if not agent:
+                continue
+            if random.random() >= 0.15:
+                continue
+            current_loc = self._space.current_location(agent_id)
+            if not current_loc:
+                continue
+            all_locs = list(self._locations.keys())
+            # 排除自己当前位置, 至少 2 个 location 才能移动
+            candidates = [l for l in all_locs if l != current_loc]
+            if not candidates:
+                continue
+            new_loc = random.choice(candidates)
+            self.move_agent(agent_id, new_loc)
+            logger.debug(
+                f"[move] tick={self._tick_id} {agent_id} {current_loc} → {new_loc}"
+            )
+
+    async def _decay_emotions(self):
+        """V0.7 Phase D P1: 每 tick 让所有 agent 情绪向中性漂移。
+
+        0.98 系数 ≈ 50 tick 残留 36%, 100 tick 残留 13%。
+        真实事件 (apply_event) 仍会把情绪拉离中性, 之后衰减会再次收敛。
+        仪表盘看: 角色情绪不再永远 (0, 0.30), 而是缓慢呼吸。
+        """
+        for agent_id, agent in self._agent_registry.items():
+            if agent is None:
+                continue
+            # 优先调 emotion_model.decay (新方法), 不存在则 fallback 到 0 操作
+            em = getattr(agent, '_emotion_model', None)
+            if em is not None and hasattr(em, 'decay'):
+                em.decay(factor=0.98)
 
     async def _generate_agent_actions(self):
         """生成 Agent 动作描述"""
